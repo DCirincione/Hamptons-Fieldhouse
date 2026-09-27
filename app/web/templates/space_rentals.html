@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block description %}Explore field rentals, camps and clinics, and birthday party packages at Hamptons Fieldhouse in Riverhead.{% endblock %}
+{% block content %}
+<header class="page-heading"><div class="container"><p class="eyebrow">PLAY. TRAIN. CELEBRATE.</p><h1>Book &amp; Register</h1><p>Find your space, your next program, or your perfect party.</p></div></header>
+<div class="rentals-page container">
+  <nav class="rental-jumps" aria-label="Explore rental options">
+    <a href="#field-rentals">Field Rentals</a>
+    <a href="#camps-clinics">Camps &amp; Clinics</a>
+    <a href="#birthday-parties">Birthday Parties</a>
+  </nav>
+  <section class="rental-section" id="field-rentals" aria-labelledby="fields-title">
+    <div class="rental-section-heading"><div><p class="eyebrow">ROOM FOR YOUR GAME</p><h2 id="fields-title">Field Rentals</h2><p>Choose the space that fits your group.</p></div><span class="rental-hours">Daily · 6 AM–11 PM</span></div>
+    <div class="rental-grid">
+      {% for item in rentals %}
+      <article class="card rental-card">
+        <span class="rental-number" aria-hidden="true">0{{ loop.index }}</span><h3>{{ item.name }}</h3><p>{{ item.description }}</p>
+        <ul>{% for detail in item.details %}<li>{{ detail }}</li>{% endfor %}</ul>
+        <div class="rental-card-bottom"><p class="rental-price">{% if item.price_cents is not none %}${{ '%.2f'|format(item.price_cents / 100) }}{% else %}Pricing: TBD{% endif %}</p><button class="button" type="button" data-booking-option="{{ item.name }}">View booking details <span aria-hidden="true">↗</span></button></div>
+      </article>
+      {% else %}<p>No rental options are listed yet. Please check back soon.</p>{% endfor %}
+    </div>
+  </section>
+  <section class="rental-section" id="camps-clinics" aria-labelledby="programs-title">
+    <div class="rental-section-heading"><div><p class="eyebrow">BUILD SKILLS. HAVE FUN.</p><h2 id="programs-title">Camps &amp; Clinics</h2><p>Find new ways to play and develop your game.</p></div></div>
+    {% if programs %}<div class="rental-grid">{% for item in programs %}<article class="card rental-card"><p class="eyebrow">{{ item.category }}</p><h3>{{ item.name }}</h3><p>{{ item.description }}</p><ul>{% for detail in item.details %}<li>{{ detail }}</li>{% endfor %}</ul><button class="button" type="button" data-booking-option="{{ item.name }}">View registration details ↗</button></article>{% endfor %}</div>
+    {% else %}<div class="card programs-empty"><div><h3>The next session starts here.</h3><p>Upcoming camps and clinics will be listed here with dates, age groups, and registration details.</p></div><span class="status-pill">Schedule: TBD</span></div>{% endif %}
+  </section>
+  <section class="rental-section" id="birthday-parties" aria-labelledby="parties-title">
+    <div class="rental-section-heading"><div><p class="eyebrow">A BIRTHDAY BUILT AROUND PLAY</p><h2 id="parties-title">Birthday Parties</h2><p>Two ways to celebrate. One unforgettable day at the fieldhouse.</p></div></div>
+    <div class="party-grid">
+      {% for item in packages %}<article class="card party-card"><p class="eyebrow">{{ item.description }}</p><h3>{{ item.name }}</h3><div class="party-facts"><span>{{ item.duration_minutes }} minutes</span><span>Up to {{ item.capacity }} kids</span></div><ul>{% for detail in item.details %}<li>{{ detail }}</li>{% endfor %}</ul><div class="rental-card-bottom"><p class="rental-price">{% if item.price_cents is not none %}${{ '%.2f'|format(item.price_cents / 100) }}{% else %}Package price: TBD{% endif %}</p><button class="button" type="button" data-booking-option="{{ item.name }}">View booking details <span aria-hidden="true">↗</span></button></div></article>{% else %}<p>Party packages will be listed here soon.</p>{% endfor %}
+    </div>
+    <aside class="card party-extras" aria-labelledby="extras-title"><div><h3 id="extras-title">Make it your party</h3><p>Please bring your own cake and decorations.</p></div><dl><div><dt>Additional kids</dt><dd>$17 per child</dd></div><div><dt>Additional pizza</dt><dd>$20 each</dd></div><div><dt>Pizza with toppings</dt><dd>$22 each</dd></div></dl></aside>
+  </section>
+</div>
+<dialog class="booking-preview" id="booking-preview" aria-labelledby="booking-preview-title" aria-describedby="booking-preview-description">
+  <button class="dialog-close" type="button" aria-label="Close booking details">×</button>
+  <p class="eyebrow">BOOKING DETAILS</p><h2 id="booking-preview-title"></h2>
+  <p id="booking-preview-description">Pricing and available booking times are TBD. Online booking will open once those details are confirmed.</p>
+  <p>For now, call <a href="tel:+16312784374">631-278-4374</a> for pricing and availability.</p>
+  <a class="button" href="tel:+16312784374">Call the fieldhouse ↗</a>
+</dialog>
+<script src="/assets/rentals.js" defer></script>
+{% endblock %}

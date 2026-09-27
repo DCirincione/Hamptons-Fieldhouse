@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="home-hero" aria-label="Inside Hamptons Fieldhouse">
+  <div class="hero-photo">
+    <img src="/assets/photos/fieldhouse-hero.jpg" srcset="/assets/photos/fieldhouse-hero-small.jpg 960w, /assets/photos/fieldhouse-hero.jpg 1920w" sizes="100vw" width="1920" height="1280" fetchpriority="high" alt="Hamptons Fieldhouse banner between American and Brazilian flags above the indoor turf goal">
+  </div>
+  <a class="scroll-arrow" href="#introduction" aria-label="Scroll to the introduction"><span aria-hidden="true">↓</span></a>
+</section>
+<section class="hero-panel container" id="introduction" aria-labelledby="hero-title" tabindex="-1">
+  <div class="introduction-copy">
+    <h1 id="hero-title">Introducing Hamptons Fieldhouse</h1>
+    <p class="hero-subtitle">A Premier Multisport Facility in the Heart of the Riverhead.</p>
+    <p class="hero-intro">Strategically located with easy access for neighboring towns including the Riverhead, The Northfork, Hamptons Bays, Westhampton Beach, East Quogue, and Southampton, this state-of-the-art facility promises a haven for sports enthusiasts of all ages.</p>
+  </div>
+  <img class="introduction-photo" src="/assets/photos/fieldhouse-turf.jpg" width="1200" height="800" loading="lazy" alt="Indoor turf field at Hamptons Fieldhouse with soccer balls, a goal, and overhead safety netting">
+</section>
+<section class="home-offerings container" aria-labelledby="offerings-title">
+  <h2 id="offerings-title">What We Offer</h2>
+  <p class="offerings-intro">From sports leagues and training programs to special events and celebrations, Hamptons Fieldhouse brings our community together. Our versatile space welcomes soccer, lacrosse, baseball, pickleball, yoga, and more—with room for birthday parties, sports camps, and athletes of all ages to play, train, and grow.</p>
+  <div class="offerings-grid">
+    <a class="card offering-card" href="/space-rentals#field-rentals" aria-labelledby="offer-field-rentals">
+      <h3 id="offer-field-rentals">Field Rentals</h3>
+      <p>Choose a full field, half field, or dedicated speed and agility space.</p>
+      <span class="text-link">Explore field rentals →</span>
+    </a>
+    <a class="card offering-card" href="/space-rentals#camps-clinics" aria-labelledby="offer-camps-clinics">
+      <h3 id="offer-camps-clinics">Camps and Clinics</h3>
+      <p>Build skills, explore new sports, and enjoy time on the field through camps and training programs.</p>
+      <span class="text-link">Explore camps &amp; clinics →</span>
+    </a>
+    <a class="card offering-card" href="/space-rentals#birthday-parties" aria-labelledby="offer-birthday-parties">
+      <h3 id="offer-birthday-parties">Birthday Parties</h3>
+      <p>Celebrate with friends and a day of sports, play, and memories at the fieldhouse.</p>
+      <span class="text-link">Explore party packages →</span>
+    </a>
+  </div>
+</section>
+<section class="home-cta container card" aria-labelledby="home-cta-title">
+  <div class="home-cta-content">
+    <p class="eyebrow">YOUR NEXT DAY ON THE FIELD STARTS HERE</p>
+    <h2 id="home-cta-title">Ready to Play?</h2>
+    <p>Bring your team, build your skills, or celebrate a special day. Explore field rentals, camps and clinics, and birthday parties at Hamptons Fieldhouse—or get in touch to plan your visit.</p>
+    <div class="home-cta-actions">
+      <a class="button home-cta-primary" href="/space-rentals">Book &amp; Register</a>
+      <a class="button home-cta-secondary" href="/contact">Contact Us</a>
+    </div>
+  </div>
+</section>
+{% endblock %}

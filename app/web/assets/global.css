@@ -1,0 +1,60 @@
+/* Site-wide brand settings. Every page inherits these through base.html. */
+@import url('https://fonts.googleapis.com/css2?family=Anton&family=DM+Sans:wght@400;500;600;700&display=swap');
+
+:root {
+  --border-card: 1px solid #b4c0d0;
+  --shadow-card: 0 10px 28px rgb(0 38 93 / 9%);
+  --padding-card: clamp(22px, 3vw, 40px);
+  --radius-control: 24px;
+  --radius-panel: 24px;
+  --radius-pill: 999px;
+  --font-heading: 'Anton', Impact, sans-serif;
+  --font-body: 'DM Sans', Arial, sans-serif;
+  --font-accent: Georgia, 'Times New Roman', serif;
+  --navy: #00265D;
+  --red: #C50B30;
+  --white: #FFFFFF;
+  --ink: #242a33;
+  --muted: #647080;
+  --surface: #f5f6f8;
+  --on-dark: #FFFFFF;
+  --on-dark-muted: #D8E4F4;
+  --dark-line: #41618B;
+  --line: #e3e6eb;
+  --focus: #557baa;
+  --navy-hover: #173d71;
+  --photo-fallback: #32383f;
+}
+
+body { font-family: var(--font-body); color: var(--ink); background: var(--white); }
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  font-weight: 400;
+  font-style: normal;
+  letter-spacing: .3px;
+  color: var(--navy);
+}
+button, input, select, textarea { font: inherit; }
+
+/* Shared component shapes for existing and future pages. */
+button, input:not([type="checkbox"]):not([type="radio"]), select, textarea,
+.button, [role="button"], .skip-link { border-radius: var(--radius-control); }
+fieldset, dialog, .card, .panel { border-radius: var(--radius-panel); }
+
+button, .button, [role="button"] { border-radius: var(--radius-pill); }
+
+/* Reusable content containers for every page. */
+.card, .panel {
+  min-width: 0;
+  padding: var(--padding-card);
+  border: var(--border-card);
+  border-radius: var(--radius-panel);
+  background: var(--white);
+  box-shadow: var(--shadow-card);
+}
+.card-inset {
+  padding: 20px;
+  border: var(--border-card);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+}
