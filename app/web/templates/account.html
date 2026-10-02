@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container account-page">
+  <header class="staff-heading"><p class="eyebrow">WELCOME TO THE FIELDHOUSE</p><h1>Your Account</h1><p>Sign in or create an account to get started.</p></header>
+  <div id="account-forms" class="card" hidden>
+    <div class="staff-section-nav account-tabs" aria-label="Account options"><button type="button" data-auth-mode="login" aria-pressed="true">Sign in</button><button type="button" data-auth-mode="signup" aria-pressed="false">Create account</button></div>
+    <form id="login-form" class="account-form">
+      <label>Email<input name="email" type="email" required autocomplete="email" maxlength="254"></label>
+      <label>Password<input name="password" type="password" required autocomplete="current-password" maxlength="128"></label>
+      <button class="button" type="submit">Sign in</button>
+    </form>
+    <form id="signup-form" class="account-form" hidden>
+      <label>Name<input name="name" required autocomplete="name" maxlength="100"></label>
+      <label>Email<input name="email" type="email" required autocomplete="email" maxlength="254"></label>
+      <label>Password<input name="password" type="password" required minlength="10" maxlength="128" autocomplete="new-password" aria-describedby="password-help"></label>
+      <p id="password-help">Use at least 10 characters.</p>
+      <button class="button" type="submit">Create account</button>
+    </form>
+  </div>
+  <div id="account-summary" class="card" hidden><h2>You’re signed in</h2><p id="account-email"></p><p id="account-role"></p><button type="button" class="button" data-account-signout>Sign out</button></div>
+  <p id="account-status" role="status" aria-live="polite"></p>
+  <noscript>Please enable JavaScript to create an account or sign in.</noscript>
+</div>
+{% endblock %}

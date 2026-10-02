@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block description %}Staff booking review.{% endblock %}
+{% block content %}
+<div class="container booking-staff">
+  <header class="staff-heading"><p class="eyebrow">FIELDHOUSE · STAFF WORKSPACE</p><h1>Booking Admin</h1>
+  <p>Manage your schedule and review customer bookings.</p></header>
+  <div id="staff-controls" class="staff-toolbar" hidden>
+    <nav class="staff-section-nav" aria-label="Admin sections">
+      <button type="button" id="availability-tab" aria-controls="staff-schedule" aria-pressed="false">Manage Availability</button>
+      <button type="button" id="reservations-tab" aria-controls="staff-reservations" aria-pressed="true">Booking Requests &amp; Reservations</button>
+    </nav>
+    <div class="staff-utilities" aria-label="Workspace actions">
+      <button class="staff-utility" id="staff-refresh" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 17.9 17"/></svg><span>Refresh</span></button>
+      <span class="staff-utility-divider" aria-hidden="true"></span>
+      <button class="staff-utility" id="staff-logout" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 4H4v16h5M13 8l4 4-4 4M8 12h12"/></svg><span>Sign out</span></button>
+    </div>
+  </div>
+  <p id="staff-status" role="status"></p>
+  {% include "staff_schedule.html" %}
+  <section id="staff-reservations" hidden aria-labelledby="staff-reservations-title">
+    <h2 id="staff-reservations-title">Booking Requests &amp; Reservations</h2>
+    <p class="staff-section-description">Review pending requests and keep track of approved bookings.</p>
+    <details class="staff-guidelines"><summary>Booking review guidelines</summary><p>Pending requests hold their time until approved or cancelled. Confirm payment arrangements before approving, then contact the customer with the outcome. Approval does not mark payment as collected; automated messages are not enabled.</p><p>Up to 500 active bookings, with pending requests shown first.</p></details>
+    <div id="staff-bookings"></div>
+  </section>
+</div>
+<script src="/assets/booking-staff.js?v=3" defer></script>
+{% endblock %}

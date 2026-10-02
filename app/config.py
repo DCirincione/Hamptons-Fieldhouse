@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     app_name: str = "Hamptons Fieldhouse API"
     supabase_url: str = ""
     supabase_key: SecretStr = SecretStr("")
+    supabase_service_role_key: SecretStr = SecretStr("")
+    site_url: str = "http://localhost:8000"
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
 
 

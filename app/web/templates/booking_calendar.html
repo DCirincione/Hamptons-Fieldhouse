@@ -1,0 +1,48 @@
+<dialog class="card booking-calendar" id="booking-calendar" aria-labelledby="calendar-title">
+  <button type="button" class="dialog-close" id="close-booking-calendar" aria-label="Close booking calendar" autofocus>×</button>
+  <div class="rental-section-heading"><div><p class="eyebrow">MAKE TIME TO PLAY</p><h2 id="calendar-title">Find your time</h2><p>Choose a service and an available time. All times are Eastern.</p></div><span class="rental-hours">Daily · 6 AM–11 PM</span></div>
+  <label for="booking-service">What would you like to book?</label>
+  <select id="booking-service">
+    {% for item in rentals + packages %}<option value="{{ item.slug }}">{{ item.name }}</option>{% endfor %}
+  </select>
+  <div class="calendar-layout">
+    <div>
+      <div class="calendar-navigation"><button type="button" id="previous-month" aria-label="Previous month">←</button><h3 id="calendar-month"></h3><button type="button" id="next-month" aria-label="Next month">→</button></div>
+      <div class="calendar-weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+      <div class="calendar-days" id="calendar-days" aria-label="Available booking dates"></div>
+      <p class="calendar-help">Dates with available times can be selected. Standard rentals: 60 minutes. Parties: 90 minutes.</p>
+      <button type="button" class="text-link" id="refresh-calendar">Refresh availability</button>
+    </div>
+    <div>
+      <h3 id="slot-heading">Choose a date</h3>
+      <div id="booking-slots" class="booking-slots" aria-labelledby="slot-heading"></div>
+      <p id="calendar-status" role="status" aria-live="polite"></p>
+      <p>Need a custom time? <a href="/contact">Contact us</a> or call <a href="tel:+16312784374">631-278-4374</a>.</p>
+    </div>
+  </div>
+  <form id="reservation-form" hidden>
+    <fieldset id="reservation-fields">
+      <legend>Your booking details</legend>
+      <p id="selected-booking"></p>
+      <div class="booking-fields">
+        <label>First name<input name="first_name" autocomplete="given-name" required maxlength="100"></label>
+        <label>Last name<input name="last_name" autocomplete="family-name" required maxlength="100"></label>
+        <label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label>
+        <label>Phone number<input name="phone_number" type="tel" autocomplete="tel" required minlength="7" maxlength="30"></label>
+        <label><span id="party-size-label">Number of participants</span><input name="party_size" type="number" min="1" max="200" value="1" required></label>
+        <label>Payment method<select name="payment_method"><option value="venmo">Venmo — staff approval required</option><option value="other">Other — arrange with staff</option></select></label>
+      </div>
+      <div id="party-options" hidden>
+        <label class="booking-checkbox"><input type="checkbox" name="own_food"> <span id="food-discount-label">Bring your own food</span></label>
+        <label>Additional pizzas with toppings<input name="extra_pizzas" type="number" value="0" min="0" max="20"></label>
+        <p>Please bring your own cake and decorations.</p>
+      </div>
+      <label>Notes (optional)<textarea name="notes" rows="3" maxlength="3000" placeholder="Anything our team should know?"></textarea></label>
+      <div class="booking-review"><h3>Review your request</h3><div id="booking-breakdown"></div><p class="booking-total" id="booking-total"></p><p>Your time will be held while staff reviews your booking and payment. This is not a confirmed reservation until staff approves it. No payment is collected on this website yet.</p></div>
+      <button class="button" type="submit" id="reserve-button">Request booking &amp; hold time ↗</button>
+    </fieldset>
+  </form>
+  <p id="reservation-status" role="status" aria-live="polite"></p>
+  <div id="booking-receipt" class="booking-receipt" tabindex="-1" hidden></div>
+  <noscript><p>Please enable JavaScript to view availability, or call 631-278-4374 to arrange a booking.</p></noscript>
+</dialog>

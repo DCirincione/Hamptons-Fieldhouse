@@ -9,36 +9,41 @@
     <a href="#birthday-parties">Birthday Parties</a>
   </nav>
   <section class="rental-section" id="field-rentals" aria-labelledby="fields-title">
-    <div class="rental-section-heading"><div><p class="eyebrow">ROOM FOR YOUR GAME</p><h2 id="fields-title">Field Rentals</h2><p>Choose the space that fits your group.</p></div><span class="rental-hours">Daily · 6 AM–11 PM</span></div>
-    <div class="rental-grid">
+    <div class="rental-section-heading"><div><p class="eyebrow">ROOM FOR YOUR GAME</p><h2 id="fields-title">Field Rentals</h2><p>Rent the full field, or book the speed and agility space and batting cage together.</p></div><span class="rental-hours">Daily · 6 AM–11 PM</span></div>
+    <div class="rental-grid field-rental-grid">
       {% for item in rentals %}
-      <article class="card rental-card">
+      <article class="card rental-card" data-book-card="{{ item.slug }}">
         <span class="rental-number" aria-hidden="true">0{{ loop.index }}</span><h3>{{ item.name }}</h3><p>{{ item.description }}</p>
         <ul>{% for detail in item.details %}<li>{{ detail }}</li>{% endfor %}</ul>
-        <div class="rental-card-bottom"><p class="rental-price">{% if item.price_cents is not none %}${{ '%.2f'|format(item.price_cents / 100) }}{% else %}Pricing: TBD{% endif %}</p><button class="button" type="button" data-booking-option="{{ item.name }}">View booking details <span aria-hidden="true">↗</span></button></div>
+        <div class="rental-card-bottom"><p class="rental-price">{% if item.price_cents is not none %}${{ '%.2f'|format(item.price_cents / 100) }} / hour{% else %}Pricing: TBD{% endif %}</p><button class="button" type="button" data-book-service="{{ item.slug }}" aria-haspopup="dialog" aria-controls="booking-calendar">Choose a date &amp; time <span aria-hidden="true">↗</span></button></div>
       </article>
       {% else %}<p>No rental options are listed yet. Please check back soon.</p>{% endfor %}
     </div>
+    <p>Standard rentals are booked in one-hour blocks. Need 90 minutes or another custom duration? <a href="/contact">Contact us</a> or call <a href="tel:+16312784374">631-278-4374</a> so we can confirm a time and price that fit the schedule.</p>
   </section>
   <section class="rental-section" id="camps-clinics" aria-labelledby="programs-title">
     <div class="rental-section-heading"><div><p class="eyebrow">BUILD SKILLS. HAVE FUN.</p><h2 id="programs-title">Camps &amp; Clinics</h2><p>Find new ways to play and develop your game.</p></div></div>
     {% if programs %}<div class="rental-grid">{% for item in programs %}<article class="card rental-card"><p class="eyebrow">{{ item.category }}</p><h3>{{ item.name }}</h3><p>{{ item.description }}</p><ul>{% for detail in item.details %}<li>{{ detail }}</li>{% endfor %}</ul><button class="button" type="button" data-booking-option="{{ item.name }}">View registration details ↗</button></article>{% endfor %}</div>
-    {% else %}<div class="card programs-empty"><div><h3>The next session starts here.</h3><p>Upcoming camps and clinics will be listed here with dates, age groups, and registration details.</p></div><span class="status-pill">Schedule: TBD</span></div>{% endif %}
+    {% else %}<div class="card programs-empty"><div><h3>The next session starts here.</h3><p>Upcoming camps and clinics will be listed here with flyers, descriptions, dates, costs, and registration details.</p></div><span class="status-pill">Schedule: TBD</span></div>{% endif %}
   </section>
   <section class="rental-section" id="birthday-parties" aria-labelledby="parties-title">
     <div class="rental-section-heading"><div><p class="eyebrow">A BIRTHDAY BUILT AROUND PLAY</p><h2 id="parties-title">Birthday Parties</h2><p>Two ways to celebrate. One unforgettable day at the fieldhouse.</p></div></div>
     <div class="party-grid">
-      {% for item in packages %}<article class="card party-card"><p class="eyebrow">{{ item.description }}</p><h3>{{ item.name }}</h3><div class="party-facts"><span>{{ item.duration_minutes }} minutes</span><span>Up to {{ item.capacity }} kids</span></div><ul>{% for detail in item.details %}<li>{{ detail }}</li>{% endfor %}</ul><div class="rental-card-bottom"><p class="rental-price">{% if item.price_cents is not none %}${{ '%.2f'|format(item.price_cents / 100) }}{% else %}Package price: TBD{% endif %}</p><button class="button" type="button" data-booking-option="{{ item.name }}">View booking details <span aria-hidden="true">↗</span></button></div></article>{% else %}<p>Party packages will be listed here soon.</p>{% endfor %}
+      {% for item in packages %}<article class="card party-card" data-book-card="{{ item.slug }}"><p class="eyebrow">{{ item.description }}</p><h3>{{ item.name }}</h3><div class="party-facts"><span>{{ item.duration_minutes }} minutes</span><span>Up to {{ item.capacity }} kids</span></div><ul>{% for detail in item.details %}<li>{{ detail }}</li>{% endfor %}</ul><div class="rental-card-bottom"><p class="rental-price">{% if item.price_cents is not none %}${{ '%.2f'|format(item.price_cents / 100) }}{% else %}Package price: TBD{% endif %}</p><button class="button" type="button" data-book-service="{{ item.slug }}" aria-haspopup="dialog" aria-controls="booking-calendar">Choose a date &amp; time <span aria-hidden="true">↗</span></button></div></article>{% else %}<p>Party packages will be listed here soon.</p>{% endfor %}
     </div>
-    <aside class="card party-extras" aria-labelledby="extras-title"><div><h3 id="extras-title">Make it your party</h3><p>Please bring your own cake and decorations.</p></div><dl><div><dt>Additional kids</dt><dd>$17 per child</dd></div><div><dt>Additional pizza</dt><dd>$20 each</dd></div><div><dt>Pizza with toppings</dt><dd>$22 each</dd></div></dl></aside>
+    <aside class="card party-extras" aria-labelledby="extras-title"><div><h3 id="extras-title">Make it your party</h3><p>Please bring your own cake and decorations.</p></div><dl><div><dt>Additional kids</dt><dd>$17 per child</dd></div><div><dt>Pizza with toppings</dt><dd>$22 each</dd></div></dl></aside>
   </section>
+  <aside class="card party-extras"><div><h3>Participant waiver</h3><p>Camp and clinic registration requires a signed waiver.</p></div><a class="button" href="https://www.hamptonsfieldhouse.com/waiver" target="_blank" rel="noopener noreferrer">Complete the waiver ↗</a></aside>
 </div>
+{% include "booking_calendar.html" %}
+<noscript><p class="container">Please enable JavaScript to view booking times, or call <a href="tel:+16312784374">631-278-4374</a>.</p></noscript>
 <dialog class="booking-preview" id="booking-preview" aria-labelledby="booking-preview-title" aria-describedby="booking-preview-description">
   <button class="dialog-close" type="button" aria-label="Close booking details">×</button>
   <p class="eyebrow">BOOKING DETAILS</p><h2 id="booking-preview-title"></h2>
-  <p id="booking-preview-description">Pricing and available booking times are TBD. Online booking will open once those details are confirmed.</p>
-  <p>For now, call <a href="tel:+16312784374">631-278-4374</a> for pricing and availability.</p>
+  <p id="booking-preview-description">Contact us to confirm availability and arrange your booking. For field rentals, standard blocks are one hour; custom durations and final rental pricing must be confirmed with our team.</p>
+  <p>Call <a href="tel:+16312784374">631-278-4374</a> or <a href="/contact">send an inquiry</a>.</p>
   <a class="button" href="tel:+16312784374">Call the fieldhouse ↗</a>
 </dialog>
 <script src="/assets/rentals.js" defer></script>
+<script src="/assets/booking-calendar.js" defer></script>
 {% endblock %}

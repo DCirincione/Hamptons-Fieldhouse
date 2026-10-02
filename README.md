@@ -19,7 +19,8 @@ python -m uvicorn app.main:app --reload
 The starter runs without Supabase credentials. Add your project's URL and publishable
 key (or legacy anon key) to `.env` when you are ready to use the database.
 Keep row level security enabled and add policies for the data your API should access.
-User authentication and sports/program database tables are not scaffolded yet.
+Email/password accounts are available at `/account`. Staff access requires a
+confirmed account with an admin role; see [account and booking setup](docs/bookings.md).
 
 ## Website styles and pages
 
@@ -96,12 +97,16 @@ unboxed, and aligned with the content container. Reserve `card` for content grou
 
 ## Book & Register
 
-`/space-rentals` contains field rentals, camps and clinics, and both birthday
-packages. Pricing and scheduling not yet supplied are shown as TBD. The booking
-buttons currently open a preview with phone contact; they do not confirm a booking.
+`/space-rentals` offers service-specific calendars for full-field rentals, the
+combined speed/agility and batting cage, and both birthday packages. Customers
+choose a time, review pricing/extras, and submit a request that holds the slot
+pending staff approval. `/admin/bookings` lets staff approve or cancel requests.
+Staff can also block individual dates, daily repeats, or selected weekdays for
+regular customers, and release one occurrence or a whole series. Square and
+automated email/SMS notifications are not integrated yet.
 
-Apply `supabase/migrations/202609260003_bookings.sql` in Supabase SQL Editor to
-store the catalog and prepare the private booking tables. The page reads published
-offerings once that setup is complete and otherwise uses `app/data/offerings.json`
-for the layout preview. See [booking setup](docs/bookings.md) for the database
-structure and the remaining requirements for immediate confirmation.
+Apply the five booking migrations in order, configure the server-only
+`SUPABASE_SERVICE_ROLE_KEY` and `SITE_URL`, and activate
+`booking_policy.enabled` after reviewing rates and scheduling settings. Booking
+fails closed until configured; the JSON catalog fallback does not invent available
+times. See [booking setup and tests](docs/bookings.md) for instructions.

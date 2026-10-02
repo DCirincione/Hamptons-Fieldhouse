@@ -1,0 +1,44 @@
+<div id="staff-schedule" hidden>
+<section class="card" aria-labelledby="staff-schedule-title">
+  <h2 id="staff-schedule-title">Daily Schedule</h2>
+  <p>Every day is open from 6 AM–11 PM. Block time below for regular customers, phone bookings, or closures. All times are Eastern.</p>
+  <div class="booking-fields">
+    <label>View date<input type="date" id="schedule-date" required></label>
+    <label>View space<select id="schedule-resource"><option value="field">Full field</option><option value="backspace">Speed &amp; agility + batting cage</option><option value="party-area">Party area</option></select></label>
+  </div>
+  <button type="button" class="text-link" id="schedule-refresh">Refresh schedule</button>
+  <p id="schedule-status" role="status"></p>
+  <div id="schedule-day" class="schedule-day"></div>
+  <h3>Appointments and blocks for this day</h3><div id="schedule-entries"></div>
+</section>
+<section class="card staff-block-card" aria-labelledby="block-title">
+  <h2 id="block-title">Block Time</h2>
+  <p>Reserve time for a customer, recurring appointment, or closure.</p>
+  <form id="block-form">
+    <fieldset id="block-fields" aria-labelledby="block-title">
+      <label>Customer or reason (staff only)<input name="title" required maxlength="200" placeholder="e.g. Tuesday soccer team"></label>
+      <fieldset class="schedule-spaces"><legend>Spaces to reserve</legend>
+        <label><input type="checkbox" name="resource" value="field" checked> Full field</label>
+        <label><input type="checkbox" name="resource" value="backspace"> Speed &amp; agility + batting cage</label>
+        <label><input type="checkbox" name="resource" value="party-area"> Party area</label>
+      </fieldset>
+      <label>Schedule type<select id="block-mode"><option value="dates">Individual dates and times</option><option value="daily">Repeat every day</option><option value="weekly">Repeat on selected weekdays</option></select></label>
+      <div id="block-individual"><div id="block-dates"></div><button type="button" class="text-link" id="block-add-date">Add another date and time</button></div>
+      <div id="block-repeat" hidden>
+        <div class="booking-fields">
+          <label>First date<input type="date" id="block-first"></label><label>Last date (inclusive)<input type="date" id="block-last"></label>
+          <label>Start time<input type="time" id="block-start" min="06:00" max="22:59" value="18:00"></label>
+          <label>End time<input type="time" id="block-end" min="06:01" max="23:00" value="19:00"></label>
+        </div>
+        <fieldset id="block-weekdays" class="schedule-spaces" hidden><legend>Repeat every</legend>
+          {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}<label><input type="checkbox" name="weekday" value="{{ loop.index0 }}"> {{ day }}</label>{% endfor %}
+        </fieldset>
+      </div>
+      <p id="block-preview" role="status"></p>
+      <p>All selected times must be free. Blocks take effect immediately and remain until removed. They do not create a payment or send a notification.</p>
+      <button type="submit" class="button" id="block-save">Save blocked times</button>
+    </fieldset>
+  </form>
+  <p id="block-status" role="status"></p>
+</section>
+</div>
