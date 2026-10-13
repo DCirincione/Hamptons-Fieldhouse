@@ -16,7 +16,7 @@
     if (!response.ok) throw new Error('Could not sign out. Please try again.');
     location.assign('/account');
   }
-  window.fieldhouseAuth = {fetch: authFetch, signOut};
+  window.fieldhouseAuth = {fetch: authFetch, signOut, user: null, reload: loadAccount};
   const menu = $('profile-dropdown');
   document.addEventListener('click', event => { if (menu && !menu.contains(event.target)) menu.open = false; });
   document.addEventListener('keydown', event => { if (event.key === 'Escape' && menu?.open) { menu.open = false; menu.querySelector('summary').focus(); } });
@@ -28,29 +28,39 @@
     try {
       const response = await authFetch('/api/auth/me');
       if (response.status === 401) {
+        window.fieldhouseAuth.user = null;
+        document.dispatchEvent(new CustomEvent('fieldhouse:account', {detail:null}));
+        $('profile-member').hidden = true;
+        $('profile-admin').replaceChildren();
         $('profile-guest').hidden = false;
         if ($('account-forms')) $('account-forms').hidden = false;
         return;
       }
       if (!response.ok) throw new Error('Account details could not be loaded. Please refresh to try again.');
       const user = await response.json();
+      window.fieldhouseAuth.user = user;
+      document.dispatchEvent(new CustomEvent('fieldhouse:account', {detail:user}));
       $('profile-guest').hidden = true;
       $('profile-member').hidden = false;
       $('profile-name').textContent = user.name || 'My account';
       $('profile-email').textContent = user.email;
       // Create the admin link only for a server-verified administrator.
+      $('profile-admin').replaceChildren();
       if (user.is_admin) {
         const link = document.createElement('a'); link.href = '/admin/bookings'; link.textContent = 'Booking Admin';
         $('profile-admin').replaceChildren(link);
       }
       if ($('account-forms')) {
+        $('account-intro').textContent = 'Your bookings, approval updates, and contact details—all in one place.';
         $('account-forms').hidden = true;
         $('account-summary').hidden = false;
         $('account-email').textContent = user.email;
         $('account-role').textContent = user.is_admin ? 'Administrator' : 'Member';
+        if (new URLSearchParams(location.search).get('next') === 'booking') location.replace('/space-rentals');
         if (user.is_admin && new URLSearchParams(location.search).get('next') === 'admin') location.replace('/admin/bookings');
         else if (!user.is_admin && new URLSearchParams(location.search).get('next') === 'admin') $('account-status').textContent = 'This account does not have admin permission.';
       }
+      return user;
     } catch (error) {
       $('profile-status').textContent = error.message;
       if ($('account-forms')) $('account-forms').hidden = false;
@@ -86,5 +96,5 @@
     history.replaceState(null, '', location.pathname + location.search);
     $('account-status').textContent = 'Your email is confirmed. Sign in to continue.';
   }
-  loadAccount();
+  window.fieldhouseAuth.ready = loadAccount();
 })();

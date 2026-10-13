@@ -36,9 +36,11 @@ with patch('app.main.get_rental_catalog', return_value=catalog), TestClient(app)
         request = route.request
         parsed = urlparse(request.url)
         if parsed.path == '/api/auth/me':
-            route.fulfill(status=200 if signed_in else 401,json={'name':'Admin','email':'admin@example.com','is_admin':True} if signed_in else {'detail':'Sign in'})
+            route.fulfill(status=200 if signed_in else 401,json={'name':'Admin','email':'admin@example.com','is_admin':True,'email_confirmed':True,'phone_number':'6315550123'} if signed_in else {'detail':'Sign in'})
         elif parsed.path == '/api/auth/refresh':
             route.fulfill(status=401,json={'detail':'Sign in'})
+        elif parsed.path == '/api/bookings/mine':
+            route.fulfill(json={'bookings':[],'has_more':False})
         elif parsed.path == '/api/auth/logout':
             signed_in = False
             route.fulfill(json={'signed_in':False})
@@ -62,11 +64,12 @@ with patch('app.main.get_rental_catalog', return_value=catalog), TestClient(app)
         elif parsed.path == '/api/bookings/availability':
             slug = parse_qs(parsed.query)['service'][0]
             offer = next(o for o in catalog if o['slug'] == slug)
-            payload = dict(service=slug, name=offer['name'], category=offer['category'], price_cents=offer['price_cents'], duration_minutes=offer['duration_minutes'], included_children=offer['capacity'], own_food_discount_cents=5000 if slug=='turf-fun-party' else 6000 if offer['category']=='birthday' else 0, extra_child_cents=1700, extra_pizza_cents=2200, today=now.date().isoformat(), last_date=(now + timedelta(days=90)).date().isoformat(), slots=[dict(starts_at=starts, ends_at=(target + timedelta(minutes=offer['duration_minutes'])).isoformat())])
+            payload = dict(service=slug, name=offer['name'], category=offer['category'], price_cents=offer['price_cents'], duration_minutes=offer['duration_minutes'], included_children=offer['capacity'], own_food_discount_cents=5000 if slug=='turf-fun-party' else 6000 if offer['category']=='birthday' else 0, extra_child_cents=1700, extra_pizza_cents=2200, today=now.date().isoformat(), last_date=(now + timedelta(days=90)).date().isoformat(), slots=[dict(starts_at=dt.isoformat(), ends_at=(dt + timedelta(minutes=offer['duration_minutes'])).isoformat()) for dt in [target, target+timedelta(days=3), target+timedelta(days=4,hours=1), target+timedelta(days=32)] if dt.strftime('%Y-%m') == parse_qs(parsed.query)['month'][0][:7]])
             route.fulfill(json=payload)
         elif parsed.path == '/api/bookings' and request.method == 'POST':
             payload = request.post_data_json; requests.append(payload)
-            route.fulfill(status=201, json=dict(reference='test-reference', status='pending', payment_status='unpaid', total_price_cents=payload['expected_total_cents'], starts_at=starts, ends_at=(target+timedelta(minutes=90)).isoformat()))
+            count=1+len(payload.get('additional_dates',[]))
+            route.fulfill(status=201, json=dict(request_id=payload['request_id'],occurrences=count,total_price_cents=payload['expected_total_cents']*count,bookings=[dict(reference=f'test-reference-{i}',status='pending',payment_status='unpaid',total_price_cents=payload['expected_total_cents'],starts_at=(target+timedelta(days=7*i)).isoformat(),ends_at=(target+timedelta(days=7*i,minutes=90)).isoformat()) for i in range(count)]))
         else:
             response = client.get(parsed.path)
             route.fulfill(status=response.status_code, body=response.content, content_type=response.headers.get('content-type', 'text/plain'))
@@ -91,7 +94,7 @@ with patch('app.main.get_rental_catalog', return_value=catalog), TestClient(app)
     page.locator('#booking-slots button').first.click()
     page.locator('[name=first_name]').fill('Dan')
     page.locator('[name=last_name]').fill('Test')
-    page.locator('[name=email]').fill('dan@example.com')
+    assert page.locator('[name=email]').input_value() == 'admin@example.com'
     page.locator('[name=phone_number]').fill('631-555-0123')
     page.locator('[name=party_size]').fill('14')
     page.locator('[name=extra_pizzas]').fill('2')
@@ -101,11 +104,49 @@ with patch('app.main.get_rental_catalog', return_value=catalog), TestClient(app)
     page.locator('[name=extra_pizzas]').fill('0')
     assert '$429.00' in page.locator('#booking-total').inner_text()
     page.screenshot(path='/tmp/fieldhouse-booking-desktop.png', full_page=True)
+    assert not page.locator('#additional-dates-panel').is_visible()
+    page.locator('#toggle-additional-dates').click()
+    assert page.locator('#toggle-additional-dates').get_attribute('aria-expanded') == 'true'
+    extra = (target+timedelta(days=3)).date().isoformat()
+    if extra[:7] != target.strftime('%Y-%m'):
+        page.locator('#additional-next').click()
+    choice = page.locator(f'#additional-days button[data-date="{extra}"]')
+    choice.click()
+    unavailable_date = (target+timedelta(days=4)).date().isoformat()
+    if unavailable_date[:7] == extra[:7]:
+        assert page.locator(f'#additional-days button[data-date="{unavailable_date}"]').is_disabled()
+    assert choice.get_attribute('aria-pressed') == 'true'
+    choice.click()
+    assert '$429.00' in page.locator('#booking-total').inner_text()
+    choice.click()
+    later = (target+timedelta(days=32)).date().isoformat()
+    if later[:7] != extra[:7]:
+        page.locator('#additional-next').click()
+    page.locator(f'#additional-days button[data-date="{later}"]').click()
+    assert '$1,287.00' in page.locator('#booking-total').inner_text()
+    page.locator('#selected-dates button').last.click()
+    assert page.locator('#selected-dates button').count() == 1
+    page.locator('#toggle-additional-dates').click()
+    assert not page.locator('#additional-dates-panel').is_visible()
+    assert page.locator('#selected-dates button').count() == 1
+    page.locator('[name=payment_method]').select_option('cash')
+    assert '$858.00' in page.locator('#booking-total').inner_text()
+    assert page.locator('#booking-payment-plan').is_visible()
+    assert '$429.00' in page.locator('#booking-payment-summary').inner_text()
+    page.locator('[name=payment_plan][value=all_sessions]').check()
+    assert '$858.00' in page.locator('#booking-payment-summary').inner_text()
+    page.locator('[name=payment_plan][value=one_session]').check()
+    assert 'Remaining sessions' in page.locator('#booking-payment-summary').inner_text()
+    page.locator('[name=payment_plan][value=all_sessions]').check()
     page.locator('#reserve-button').click()
     page.locator('#booking-receipt').wait_for(state='visible')
     assert 'awaiting staff approval' in page.locator('#booking-receipt').inner_text()
     assert len(requests)==1 and requests[0]['expected_total_cents']==42900
-    assert requests[0]['payment_method']=='venmo'
+    assert requests[0]['payment_method']=='cash'
+    assert requests[0]['payment_plan']=='all_sessions'
+    assert 'all sessions · $858.00' in page.locator('#booking-receipt').inner_text()
+    assert requests[0]['additional_dates']==[extra]
+    assert '2 dates' in page.locator('#booking-receipt').inner_text()
     assert not page.locator('#reservation-form').is_visible()
     page.locator('#close-booking-calendar').click()
     assert not page.locator('#booking-calendar').is_visible()
@@ -115,10 +156,14 @@ with patch('app.main.get_rental_catalog', return_value=catalog), TestClient(app)
     page.locator('#calendar-days button:not([disabled])').first.click()
     page.locator('#booking-slots button').first.click()
     assert '$75.00' in page.locator('#booking-total').inner_text()
+    assert not page.locator('#booking-payment-plan').is_visible()
     assert not page.locator('#party-options').is_visible()
     assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
     assert page.locator('#booking-calendar').evaluate('(el) => el.scrollWidth <= el.clientWidth')
-    page.screenshot(path='/tmp/fieldhouse-booking-mobile.png', full_page=True)
+    assert not page.locator('#additional-dates-panel').is_visible()
+    page.locator('#toggle-additional-dates').click()
+    page.locator('#additional-days').scroll_into_view_if_needed()
+    page.locator('#booking-calendar').screenshot(path='/tmp/fieldhouse-booking-mobile.png')
     page.unroute('**/*', route_handler)
     def unavailable(route):
         if '/api/bookings/availability' in route.request.url:

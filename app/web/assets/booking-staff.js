@@ -36,7 +36,10 @@
         const heading = document.createElement('h2'); heading.textContent = `${booking.status === 'pending' ? 'Pending approval' : 'Approved'} · ${booking.offerings?.name || 'Booking'}`;
         const details = document.createElement('p');
         const extras = (booking.booking_line_items || []).map(item => `${item.quantity} × ${item.booking_extras?.name || 'Extra'}`).join(', ');
-        details.textContent = `${date(booking.starts_at)} – ${date(booking.ends_at)} Eastern\n${booking.first_name} ${booking.last_name} · ${booking.party_size} participants\n${booking.email} · ${booking.phone_number}\n${money(booking.total_price_cents)} · ${booking.payment_method} · ${booking.payment_status}\n${booking.own_food ? 'Bringing own food' : 'Standard package'}${extras ? ` · ${extras}` : ''}\nReference: ${booking.id}${booking.notes ? `\nNotes: ${booking.notes}` : ''}`;
+        const repeating = booking.customer_request_id && bookings.filter(b => b.customer_request_id === booking.customer_request_id).length > 1;
+        const paymentChoice = booking.session_count > 1 && booking.payment_plan
+          ? `\nPayment choice: ${booking.payment_plan === 'all_sessions' ? 'All sessions now' : 'One session now'} · ${money(booking.initial_payment_cents)} requested now for the ${booking.session_count}-session request (not per date). Payment not verified by this choice.` : '';
+        details.textContent = `${repeating ? 'Repeating schedule · approve each date separately\n' : ''}${date(booking.starts_at)} – ${date(booking.ends_at)} Eastern\n${booking.first_name} ${booking.last_name} · ${booking.party_size} participants\n${booking.email} · ${booking.phone_number}\n${money(booking.total_price_cents)} · ${booking.payment_method} · ${booking.payment_status}${paymentChoice}\n${booking.own_food ? 'Bringing own food' : 'Standard package'}${extras ? ` · ${extras}` : ''}\nReference: ${booking.id}${booking.notes ? `\nNotes: ${booking.notes}` : ''}`;
         const actions = document.createElement('div'); actions.className = 'staff-actions';
         (booking.status === 'pending' ? ['approve', 'cancel'] : ['cancel']).forEach(action => {
           const button = document.createElement('button'); button.type = 'button'; button.className = 'button';

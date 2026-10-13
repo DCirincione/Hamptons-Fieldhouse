@@ -1,7 +1,8 @@
 """Availability and reservations. PostgreSQL owns prices and conflict checks."""
-from datetime import date, datetime
+from datetime import date, datetime, timedelta, timezone
 from typing import Literal
-from uuid import UUID
+from uuid import UUID, uuid5
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from httpx import HTTPError
@@ -10,7 +11,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from supabase import Client, ClientOptions, create_client
 
 from app.config import Settings, get_settings
-from app.auth import require_staff
+from app.auth import require_staff, verified_customer
 from app.routes.contact import ContactMessage
 
 router = APIRouter(prefix="/bookings", tags=["bookings"])
@@ -39,7 +40,9 @@ class Reservation(BaseModel):
     party_size: int = Field(ge=1, le=200, strict=True)
     extra_pizzas: int = Field(default=0, ge=0, le=20, strict=True)
     own_food: bool = False
-    payment_method: Literal["venmo", "other"]
+    payment_method: Literal["venmo", "cash", "other"]
+    payment_plan: Literal["one_session", "all_sessions"] = "one_session"
+    additional_dates: list[date] = Field(default_factory=list, max_length=29)
     notes: str = Field(default="", max_length=3000)
     expected_total_cents: int = Field(ge=0, strict=True)
 
@@ -79,8 +82,55 @@ def availability(response: Response, service: Service, month: date = Query(...),
 
 
 @router.post("", status_code=201)
-def reserve(data: Reservation, db: Client = Depends(get_booking_db)):
-    return rpc(db, "reserve_booking", {"p_request": data.model_dump(mode="json")})
+def reserve(data: Reservation, user=Depends(verified_customer), db: Client = Depends(get_booking_db)):
+    start = data.starts_at.astimezone(ZoneInfo("America/New_York"))
+    dates = [start.date(), *data.additional_dates]
+    if len(set(dates)) != len(dates):
+        raise HTTPException(422, "Choose each booking date only once.")
+    if any(day < start.date() or day > start.date() + timedelta(days=365) for day in dates):
+        raise HTTPException(422, "Choose additional dates on or after your first booking, within the booking window.")
+    dates.sort()
+    count = len(dates)
+    payload = data.model_dump(mode="json", exclude={"additional_dates"})
+    # Identity is taken from the verified session, never a customer-supplied ID or email.
+    payload["email"] = user.email
+    payload["payment_plan"] = data.payment_plan if count > 1 else "one_session"
+    payload["initial_payment_cents"] = data.expected_total_cents * (count if payload["payment_plan"] == "all_sessions" else 1)
+    payload["session_count"] = count
+    payload["occurrences"] = [
+        {"starts_at": datetime.combine(day, start.time(), start.tzinfo).isoformat(),
+         "request_id": str(uuid5(data.request_id, day.isoformat()))} for day in dates
+    ]
+    try:
+        return rpc(db, "reserve_customer_bookings", {"p_user_id": str(user.id), "p_request": payload})
+    except HTTPException as exc:
+        if exc.status_code == 409 and count > 1:
+            raise HTTPException(409, "A time is unavailable or a price has changed. No bookings were added. Refresh availability or choose different dates.") from None
+        raise
+
+
+@router.get("/mine")
+def my_bookings(response: Response, view: Literal["upcoming", "history"] = "upcoming",
+                offset: int = Query(0, ge=0), user=Depends(verified_customer), db: Client = Depends(get_booking_db)):
+    response.headers["Cache-Control"] = "no-store"
+    return rpc(db, "customer_bookings", {"p_user_id": str(user.id), "p_view": view, "p_offset": offset})
+
+
+@router.post("/mine/{booking_id}/cancel")
+def cancel_my_booking(booking_id: UUID, user=Depends(verified_customer), db: Client = Depends(get_booking_db)):
+    try:
+        # Filter ownership and eligibility in the write itself. The database trigger
+        # releases every resource for this booking in the same transaction.
+        rows = db.table("bookings").update({"status": "cancelled"}).eq(
+            "id", str(booking_id)
+        ).eq("customer_user_id", str(user.id)).in_("status", ["pending", "confirmed"]).gt(
+            "starts_at", datetime.now(timezone.utc).isoformat()
+        ).execute().data
+    except (APIError, HTTPError):
+        raise HTTPException(503, "Could not cancel your booking. Please refresh and try again.") from None
+    if not rows:
+        raise HTTPException(404, "No upcoming booking available to cancel. Refresh your bookings to check its status.")
+    return {"status": "cancelled"}
 
 
 class Review(BaseModel):
@@ -92,11 +142,17 @@ class Review(BaseModel):
 def staff_bookings(response: Response, db: Client = Depends(get_booking_db)):
     response.headers["Cache-Control"] = "no-store"
     try:
-        return db.table("bookings").select(
+        bookings = db.table("bookings").select(
             "id,first_name,last_name,email,phone_number,starts_at,ends_at,party_size,notes,"
-            "status,total_price_cents,payment_method,payment_status,own_food,created_at,"
+            "status,customer_request_id,total_price_cents,payment_method,payment_status,own_food,created_at,request_payload,"
             "offerings(name),booking_line_items(quantity,booking_extras(name))"
         ).in_("status", ["pending", "confirmed"]).order("starts_at").limit(500).execute().data
+        for booking in bookings:
+            saved = booking.pop("request_payload", None) or {}
+            booking["payment_plan"] = saved.get("payment_plan")
+            booking["initial_payment_cents"] = saved.get("initial_payment_cents")
+            booking["session_count"] = saved.get("session_count", 1)
+        return bookings
     except (APIError, HTTPError):
         raise HTTPException(503, "Could not load bookings. Please retry.") from None
 

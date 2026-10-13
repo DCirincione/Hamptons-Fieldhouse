@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from httpx import HTTPError
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 from supabase import Client
 from supabase_auth.errors import AuthApiError, AuthError
 
 from app.auth import (ACCESS_COOKIE, REFRESH_COOKIE, clear_session_cookies, current_user,
                       get_auth_client, public_account, require_browser_request, set_session_cookies)
 from app.config import Settings, get_settings
+from app.routes.bookings import get_booking_db
+from app.routes.contact import ContactMessage
 
 router = APIRouter(prefix='/auth', tags=['accounts'], dependencies=[Depends(require_browser_request)])
 
@@ -17,7 +19,19 @@ class Credentials(BaseModel):
     password: str = Field(min_length=1, max_length=128)
 
 
-class Signup(Credentials):
+class Profile(BaseModel):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=True)
+    name: str = Field(min_length=1, max_length=100)
+    phone_number: str = Field(default='', max_length=30)
+
+    @field_validator('phone_number')
+    @classmethod
+    def valid_phone(cls, value):
+        return ContactMessage.validate_phone(value) if value else value
+
+
+class Signup(Credentials, Profile):
+    model_config = ConfigDict(extra='forbid', str_strip_whitespace=False)
     password: str = Field(min_length=10, max_length=128)
     name: str = Field(min_length=1, max_length=100)
 
@@ -35,7 +49,7 @@ def signup(data: Signup, request: Request, response: Response,
         raise HTTPException(422, 'Please enter your name.')
     try:
         result = db.auth.sign_up({'email': str(data.email), 'password': data.password,
-            'options': {'data': {'name': data.name.strip()}, 'email_redirect_to': settings.site_url.rstrip('/') + '/account'}})
+            'options': {'data': {'name': data.name.strip(), 'phone_number': data.phone_number}, 'email_redirect_to': settings.site_url.rstrip('/') + '/account'}})
     except (AuthError, HTTPError) as exc:
         if isinstance(exc, AuthApiError) and exc.status < 500 and exc.status != 429:
             raise HTTPException(400, 'Unable to create this account. Use a stronger password, or sign in if you already have an account.') from None
@@ -95,3 +109,15 @@ def logout(request: Request, response: Response, db: Client = Depends(get_auth_c
             pass
     clear_session_cookies(response)
     return {'signed_in': False}
+
+
+@router.patch('/profile')
+def save_profile(data: Profile, response: Response, user=Depends(current_user), db: Client = Depends(get_booking_db)):
+    try:
+        result = db.auth.admin.update_user_by_id(str(user.id), {
+            'user_metadata': {**user.user_metadata, 'name': data.name, 'phone_number': data.phone_number}
+        })
+    except (AuthError, HTTPError) as exc:
+        raise auth_error(exc) from None
+    response.headers['Cache-Control'] = 'no-store'
+    return public_account(result.user)

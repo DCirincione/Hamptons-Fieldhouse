@@ -20,6 +20,7 @@
       <p>Need a custom time? <a href="/contact">Contact us</a> or call <a href="tel:+16312784374">631-278-4374</a>.</p>
     </div>
   </div>
+  <p id="booking-account-notice">Please <a href="/account?next=booking">sign in or create an account</a> to request a time and track its approval.</p>
   <form id="reservation-form" hidden>
     <fieldset id="reservation-fields">
       <legend>Your booking details</legend>
@@ -27,10 +28,26 @@
       <div class="booking-fields">
         <label>First name<input name="first_name" autocomplete="given-name" required maxlength="100"></label>
         <label>Last name<input name="last_name" autocomplete="family-name" required maxlength="100"></label>
-        <label>Email<input name="email" type="email" autocomplete="email" required maxlength="254"></label>
+        <label>Email<input name="email" type="email" readonly autocomplete="email" required maxlength="254"></label>
         <label>Phone number<input name="phone_number" type="tel" autocomplete="tel" required minlength="7" maxlength="30"></label>
         <label><span id="party-size-label">Number of participants</span><input name="party_size" type="number" min="1" max="200" value="1" required></label>
-        <label>Payment method<select name="payment_method"><option value="venmo">Venmo — staff approval required</option><option value="other">Other — arrange with staff</option></select></label>
+        <label>Payment method<select name="payment_method"><option value="venmo">Venmo — staff approval required</option><option value="cash">Cash — staff approval required</option><option value="other">Other — arrange with staff</option></select></label>
+      </div>
+      <div class="booking-repeat-options">
+        <button type="button" class="button" id="toggle-additional-dates" aria-expanded="false" aria-controls="additional-dates-panel">Book More Dates</button>
+        <div id="additional-dates-panel" hidden>
+        <p id="additional-time"></p>
+        <p>Select additional dates below. Your first date stays selected. Up to 30 dates per request.</p>
+        <div class="additional-calendar">
+          <div class="calendar-navigation"><button type="button" id="additional-previous" aria-label="Previous month for additional dates">←</button><h3 id="additional-month"></h3><button type="button" id="additional-next" aria-label="Next month for additional dates">→</button></div>
+          <div class="calendar-weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+          <div class="calendar-days" id="additional-days" aria-label="Choose additional booking dates"></div>
+        </div>
+        <p id="additional-status" role="status"></p>
+        <button type="button" class="text-link" id="additional-retry" hidden>Retry availability</button>
+        </div>
+        <div id="selected-dates" class="selected-booking-dates" aria-label="Selected dates"></div>
+        <p id="booking-repeat-summary" aria-live="polite"></p>
       </div>
       <div id="party-options" hidden>
         <label class="booking-checkbox"><input type="checkbox" name="own_food"> <span id="food-discount-label">Bring your own food</span></label>
@@ -38,7 +55,13 @@
         <p>Please bring your own cake and decorations.</p>
       </div>
       <label>Notes (optional)<textarea name="notes" rows="3" maxlength="3000" placeholder="Anything our team should know?"></textarea></label>
-      <div class="booking-review"><h3>Review your request</h3><div id="booking-breakdown"></div><p class="booking-total" id="booking-total"></p><p>Your time will be held while staff reviews your booking and payment. This is not a confirmed reservation until staff approves it. No payment is collected on this website yet.</p></div>
+      <fieldset id="booking-payment-plan" class="booking-payment-plan" hidden>
+        <legend>Payment for your repeated booking</legend>
+        <label><input type="radio" name="payment_plan" value="one_session" checked><span><strong>Pay for one session now</strong><span id="pay-one-amount"></span></span></label>
+        <label><input type="radio" name="payment_plan" value="all_sessions"><span><strong>Pay for all now</strong><span id="pay-all-amount"></span></span></label>
+        <p>Payment is arranged with staff using your selected payment method. No payment is collected online yet.</p>
+      </fieldset>
+      <div class="booking-review"><h3>Review your request</h3><div id="booking-breakdown"></div><p class="booking-total" id="booking-total"></p><p id="booking-payment-summary"></p><p>Your time will be held while staff reviews your booking and payment. This is not a confirmed reservation until staff approves it. No payment is collected on this website yet.</p></div>
       <button class="button" type="submit" id="reserve-button">Request booking &amp; hold time ↗</button>
     </fieldset>
   </form>

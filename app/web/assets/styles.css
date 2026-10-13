@@ -524,3 +524,48 @@ body.booking-modal-open { overflow: hidden; }
 .profile-dropdown summary:focus-visible, .profile-panel a:focus-visible, .profile-panel button:focus-visible { outline: 2px solid var(--focus); outline-offset: 3px; }
 @media (max-width: 1000px) { .header-inner { flex-wrap: wrap; } .profile-dropdown { margin-left: 15px; } }
 @media (max-width: 760px) { .profile-dropdown { margin: 4px 0 0; } .profile-panel { right: 50%; transform: translateX(50%); } }
+
+/* Customer profile and booking dashboard. */
+.account-page:has(#account-summary:not([hidden])) { max-width: 1100px; }
+#account-summary { display: grid; grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr); gap: 24px; align-items: start; }
+.customer-section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.customer-section-heading h2, .customer-section-heading h3, .customer-profile h2 { margin: 0 0 10px; }
+.customer-section-heading .button { white-space: nowrap; font-size: 12px; padding: 12px 16px; }
+.customer-bookings > p, .customer-profile p { font-size: 13px; }
+.customer-booking-toolbar { display: flex; align-items: center; gap: 10px; justify-content: space-between; margin-block: 20px; }
+.customer-booking-toolbar .staff-section-nav { flex: 1; }
+.customer-booking-toolbar .staff-section-nav button { padding: 9px 12px; }
+.customer-booking { padding: 22px 0; border-top: 1px solid var(--line); }
+.customer-booking h3 { font-size: 22px; }
+.customer-booking p { font-size: 13px; margin: 10px 0; }
+.booking-state { display: inline-block; border-radius: 100px; padding: 6px 10px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+.booking-state-pending { background: #fff3d4; color: #795415; }
+.booking-state-confirmed { background: #e5f3e9; color: #235d36; }
+.booking-state-cancelled { background: var(--surface); color: var(--muted); }
+.customer-repeat-note { padding: 18px; background: var(--surface); border-radius: 12px; margin-top: 20px; }
+.customer-repeat-note h3 { font-size: 21px; margin: 0 0 8px; }
+.customer-repeat-note p, .customer-repeat-note a, #my-bookings-status { font-size: 12px; }
+.customer-profile input[readonly] { background: var(--surface); color: var(--muted); }
+.booking-repeat-options { margin-top: 16px; padding: 18px; border: 1px solid var(--line); border-radius: 10px; }
+.booking-repeat-options p, #booking-account-notice { font-size: 13px; }
+@media (max-width: 800px) { #account-summary { grid-template-columns: 1fr; } }
+@media (max-width: 480px) { .customer-section-heading { flex-wrap: wrap; } .customer-booking-toolbar { flex-wrap: wrap; } }
+
+.additional-calendar { max-width: 420px; margin-top: 20px; }
+.selected-booking-dates { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+.selected-booking-dates > * { border: 1px solid var(--line); border-radius: 6px; padding: 8px 12px; background: var(--surface); color: var(--navy); font: inherit; font-size: 13px; }
+.selected-booking-dates button { cursor: pointer; }
+#additional-days button[aria-pressed=true]:disabled { opacity: 1; }
+
+.booking-payment-plan { margin: 24px 0; padding: 18px; border: 1px solid var(--line); border-radius: 10px; }
+.booking-payment-plan > label { display: flex; align-items: flex-start; gap: 12px; padding: 16px; margin: 10px 0; border: 1px solid var(--line); border-radius: 8px; cursor: pointer; }
+.booking-payment-plan > label:has(input:checked) { background: var(--surface); border-color: var(--navy); }
+.booking-payment-plan input[type=radio] { width: 18px; height: 18px; flex-shrink: 0; margin-top: 4px; accent-color: var(--navy); }
+.booking-payment-plan label span span { display: block; font-size: 13px; margin-top: 4px; }
+.booking-payment-plan p { font-size: 13px; }
+
+.customer-booking-actions { display: flex; justify-content: flex-end; margin-top: 18px; }
+.customer-cancel-button { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 9px 16px; border: 1px solid #e8c9cd; border-radius: 8px; background: #fff; color: #9a2839; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s, border-color .15s; }
+.customer-cancel-button:hover:not(:disabled) { background: #fff3f4; border-color: #c76c79; }
+.customer-cancel-button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.customer-cancel-button:disabled { opacity: .55; cursor: wait; }

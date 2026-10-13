@@ -115,5 +115,40 @@ for (const role of ['anon','authenticated']) {
   await expectCode(() => release(bookingSlot.id),'42501');
   await db.exec('reset role;');
 }
+// Customer migration and owner-isolated portal.
+await db.exec('create schema auth; create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz);');
+const owner=randomUUID(), outsider=randomUUID(), unverified=randomUUID();
+await db.query("insert into auth.users values ($1,'test@example.com',now()),($2,'other@example.com',now()),($3,'unverified@example.com',null)",[owner,outsider,unverified]);
+await db.exec(await readFile(new URL('../supabase/migrations/202610130001_customer_portal.sql',import.meta.url),'utf8'));
+const mine=(id,view='upcoming')=>scalar('select public.customer_bookings($1,$2,0) as result',[id,view]);
+const customerReserve=(id,request)=>scalar('select public.reserve_customer_bookings($1,$2::jsonb) as result',[id,JSON.stringify(request)]);
+assert((await mine(owner)).bookings.length>0,'Legacy matching verified-email bookings are linked');
+assert.equal((await mine(outsider)).bookings.length,0);
+await expectCode(()=>mine(unverified),'42501');
+const recurringRequest={...(await make('full-field',18)),payment_method:'cash',email:'other@example.com',occurrences:[
+    {request_id:randomUUID(),starts_at:await at(18)}, {request_id:randomUUID(),starts_at:await at(20)}]};
+const customerResult=await customerReserve(owner,recurringRequest);
+assert.equal(customerResult.occurrences,2);
+assert(customerResult.bookings.every(b=>b.status==='pending'));
+assert.equal((await customerReserve(owner,recurringRequest)).bookings[0].reference,customerResult.bookings[0].reference);
+await expectCode(()=>customerReserve(outsider,recurringRequest),'22023');
+assert.equal((await mine(outsider)).bookings.length,0);
+assert.equal(await scalar('select email as result from public.bookings where id=$1',[customerResult.bookings[0].reference]),'test@example.com');
+await review(customerResult.bookings[0].reference,'approve');
+assert.equal((await mine(owner)).bookings.find(b=>b.id===customerResult.bookings[0].reference).status,'confirmed');
+await review(customerResult.bookings[0].reference,'cancel');
+assert((await mine(owner,'history')).bookings.some(b=>b.id===customerResult.bookings[0].reference));
+assert(!(await mine(owner)).bookings.some(b=>b.id===customerResult.bookings[0].reference));
+const failedSeries={...recurringRequest,request_id:randomUUID(),occurrences:[{request_id:randomUUID(),starts_at:await at(18)}, {request_id:randomUUID(),starts_at:await at(20)}]};
+await expectCode(()=>customerReserve(owner,failedSeries),'P0002');
+assert(hasSlot(await availability('full-field'),await at(18)),'Conflicting series rolls back every hold');
+assert.equal(await scalar('select count(*)::integer as result from public.customer_booking_requests where id=$1',[failedSeries.request_id]),0);
+for(const role of ['anon','authenticated']) {
+  await db.exec(`set role ${role};`);
+  await expectCode(()=>mine(owner),'42501');
+  await expectCode(()=>customerReserve(owner,recurringRequest),'42501');
+  await expectCode(()=>db.query('select * from public.customer_booking_requests'),'42501');
+  await db.exec('reset role;');
+}
 await db.close();
 console.log('Database checks passed: migrations, hours, pending holds, independent spaces, party resource split, extras/discounts, price tampering, idempotency, approval/cancellation, blackout overlap constraints, and public access denied.');

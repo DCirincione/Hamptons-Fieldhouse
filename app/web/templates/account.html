@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 <div class="container account-page">
-  <header class="staff-heading"><p class="eyebrow">WELCOME TO THE FIELDHOUSE</p><h1>Your Account</h1><p>Sign in or create an account to get started.</p></header>
+  <header class="staff-heading"><p class="eyebrow">WELCOME TO THE FIELDHOUSE</p><h1>Your Account</h1><p id="account-intro">Sign in or create an account to get started.</p></header>
   <div id="account-forms" class="card" hidden>
     <div class="staff-section-nav account-tabs" aria-label="Account options"><button type="button" data-auth-mode="login" aria-pressed="true">Sign in</button><button type="button" data-auth-mode="signup" aria-pressed="false">Create account</button></div>
     <form id="login-form" class="account-form">
@@ -12,13 +12,34 @@
     <form id="signup-form" class="account-form" hidden>
       <label>Name<input name="name" required autocomplete="name" maxlength="100"></label>
       <label>Email<input name="email" type="email" required autocomplete="email" maxlength="254"></label>
+      <label>Phone number<input name="phone_number" type="tel" autocomplete="tel" maxlength="30"></label>
       <label>Password<input name="password" type="password" required minlength="10" maxlength="128" autocomplete="new-password" aria-describedby="password-help"></label>
       <p id="password-help">Use at least 10 characters.</p>
       <button class="button" type="submit">Create account</button>
     </form>
   </div>
-  <div id="account-summary" class="card" hidden><h2>You’re signed in</h2><p id="account-email"></p><p id="account-role"></p><button type="button" class="button" data-account-signout>Sign out</button></div>
+  <div id="account-summary" hidden>
+    <section class="card customer-bookings" aria-labelledby="my-bookings-title">
+      <div class="customer-section-heading"><div><p class="eyebrow">YOUR TIME AT THE FIELDHOUSE</p><h2 id="my-bookings-title">My Bookings</h2></div><a class="button" href="/space-rentals">Book a time ↗</a></div>
+      <p>Venmo and cash requests hold your time while staff reviews them. Your status updates here after approval.</p>
+      <div class="customer-booking-toolbar"><div class="staff-section-nav"><button type="button" data-booking-view="upcoming" aria-pressed="true">Upcoming</button><button type="button" data-booking-view="history" aria-pressed="false">Past &amp; cancelled</button></div><button type="button" class="staff-utility" id="my-bookings-refresh">Refresh</button></div>
+      <p id="my-bookings-status" role="status" aria-live="polite"></p>
+      <div id="my-bookings-list"></div>
+      <div class="staff-actions"><button type="button" id="my-bookings-previous" class="staff-utility" hidden>← Previous</button><button type="button" id="my-bookings-next" class="staff-utility" hidden>Next →</button></div>
+      <aside class="customer-repeat-note"><h3>Make it a regular thing</h3><p>Choose a time and click the additional dates you want on the calendar when booking. Each date is held pending staff approval.</p><a href="/space-rentals">Request recurring times →</a></aside>
+    </section>
+    <section class="card customer-profile" aria-labelledby="my-profile-title"><h2 id="my-profile-title">My Profile</h2>
+      <form id="customer-profile-form" class="account-form">
+        <label>Name<input name="name" required maxlength="100" autocomplete="name"></label>
+        <label>Email<input id="account-email-input" type="email" readonly aria-describedby="email-profile-help"></label>
+        <p id="email-profile-help">Your verified sign-in email. Contact us if you need help changing it.</p>
+        <label>Phone number<input name="phone_number" type="tel" maxlength="30" autocomplete="tel"></label>
+        <button class="button" type="submit">Save profile</button>
+      </form><p id="customer-profile-status" role="status"></p><span id="account-email" hidden></span><span id="account-role" hidden></span>
+    </section>
+  </div>
   <p id="account-status" role="status" aria-live="polite"></p>
   <noscript>Please enable JavaScript to create an account or sign in.</noscript>
 </div>
+<script src="/assets/customer-portal.js?v=3" defer></script>
 {% endblock %}

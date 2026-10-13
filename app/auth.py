@@ -66,10 +66,16 @@ def is_admin(user) -> bool:
 
 
 def public_account(user) -> dict:
-    return {'email': user.email, 'name': user.user_metadata.get('name', ''), 'is_admin': is_admin(user)}
+    return {'email': user.email, 'name': user.user_metadata.get('name', ''), 'phone_number': user.user_metadata.get('phone_number', ''), 'email_confirmed': bool(user.email_confirmed_at), 'is_admin': is_admin(user)}
 
 
 def require_staff(user=Depends(current_user), _=Depends(require_browser_request)):
     if not is_admin(user):
         raise HTTPException(403, 'An administrator account is required.')
+    return user
+
+
+def verified_customer(user=Depends(current_user), _=Depends(require_browser_request)):
+    if not user.email_confirmed_at:
+        raise HTTPException(403, 'Confirm your email before making or viewing bookings.')
     return user

@@ -105,8 +105,13 @@ Staff can also block individual dates, daily repeats, or selected weekdays for
 regular customers, and release one occurrence or a whole series. Square and
 automated email/SMS notifications are not integrated yet.
 
-Apply the five booking migrations in order, configure the server-only
+Apply the six booking migrations in order, configure the server-only
 `SUPABASE_SERVICE_ROLE_KEY` and `SITE_URL`, and activate
 `booking_policy.enabled` after reviewing rates and scheduling settings. Booking
 fails closed until configured; the JSON catalog fallback does not invent available
 times. See [booking setup and tests](docs/bookings.md) for instructions.
+
+Customer accounts at `/account` include a name/phone profile, upcoming and past
+bookings, and approval status updates every 20 seconds while visible. Booking
+requires a confirmed account and supports cash/Venmo plus selected-date repeat
+requests. Apply `202610130001_customer_portal.sql` before using this update.

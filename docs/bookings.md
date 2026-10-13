@@ -15,7 +15,7 @@ Confirmed with the client October 1, 2026:
 - Birthday parties: 60 minutes on the full field, followed by 30 minutes in the
   party area. The field becomes available after the first hour. Both birthday
   packages share these same resources and cannot double-book them.
-- Venmo/other payment methods require staff approval. Submitting a request holds
+- Venmo/cash/other payment methods require staff approval. Submitting a request holds
   its resources immediately. Approval retains the hold; cancellation/decline
   releases it. Holds do not expire automatically.
 - Square is not integrated. In the future, verified successful Square payments
@@ -25,6 +25,44 @@ Editable implementation defaults: starts on the hour, at least one hour's notice
 up to 90 days ahead. Last rental start is 10 PM; last party start is 9 PM (ends
 10:30 PM). Custom durations require contacting staff. All dates/times are interpreted
 in `America/New_York`, including daylight saving time.
+
+## Customer accounts and approval tracking
+
+`/account` now includes **My Bookings** and **My Profile**. Customers can update
+name and phone; the sign-in email is displayed read-only. Signup also accepts a
+phone number. Profile edits cannot modify admin permission or another account.
+
+New booking submissions require an email-confirmed session and are linked to
+its immutable user ID. Booking email is taken from that verified account on the
+server. Public availability browsing remains available without an account.
+The migration links older bookings only where their email matches an existing,
+email-confirmed account at migration time. Other older bookings remain unlinked;
+contact staff to reconcile those records. Later email changes do not transfer
+ownership of already-linked bookings.
+
+The dashboard displays upcoming bookings and past/cancelled bookings, with
+**Pending approval**, **Approved**, or **Cancelled** for each date. It retrieves
+only the signed-in user's rows, 50 per page, and refreshes every 20 seconds while
+visible, on returning to the page, or using Refresh. This is polling, not a push
+notification or email service. Payment labels remain separate from approval:
+Venmo/cash payment is arranged with staff, and approval does not automatically
+mark a payment as collected.
+
+Customers can repeat their selected time on exact dates chosen on the calendar, up to 30 dates per request within the existing booking horizon. Each
+occurrence preserves Eastern local time across DST and creates its own pending
+reservation for staff review. The full request is atomic: one unavailable date or
+changed price rolls back all new dates. Retries with the same request key are
+idempotent and owner-checked. The review shows per-date and full-series totals.
+Repeated requests offer payment for one session now or all sessions now. The choice
+and calculated initial amount are saved in the request payload and shown to staff.
+This is a payment preference, not a charge or proof of payment; Square remains deferred.
+The admin queue identifies repeating requests; staff approves/cancels individual
+dates, with changes appearing on the customer's next refresh.
+
+Apply the customer-portal migration before running the updated booking API.
+It adds ownership columns and service-role-only RPCs, while preserving the
+existing public table restrictions and conflict constraints. It does not change
+booking hours, prices, or payment collection.
 
 ## Rates and packages
 
@@ -52,6 +90,7 @@ Apply these migrations in order in Supabase SQL Editor (not automatically applie
 3. `supabase/migrations/202610010002_pricing_and_packages.sql`
 4. `supabase/migrations/202610010003_booking_calendar.sql`
 5. `supabase/migrations/202610010004_staff_schedule.sql`
+6. `supabase/migrations/202610130001_customer_portal.sql`
 
 The fourth migration backfills existing reservations conservatively and fails on
 conflicting legacy bookings so they can be reconciled before launch. Existing
@@ -193,3 +232,8 @@ If the original domain moves to this app, preserve the waiver route or obtain
 the provider's permanent URL first.
 
 Printful store/account details are still pending from the client.
+
+Customers can cancel their own upcoming pending or approved bookings from My Bookings.
+Cancellation applies to one date, releases its resource slots atomically, and leaves
+payment status unchanged. Refunds are arranged with staff. Past/started bookings
+cannot be cancelled through the customer endpoint.

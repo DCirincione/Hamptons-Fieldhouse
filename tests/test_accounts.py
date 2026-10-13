@@ -37,7 +37,7 @@ class AccountTests(unittest.TestCase):
         response=self.client.post('/api/auth/signup',json=payload,headers=self.headers)
         self.assertEqual(response.status_code,200)
         sent=self.auth.auth.sign_up.call_args.args[0]
-        self.assertEqual(sent['options']['data'],{'name':'New member'})
+        self.assertEqual(sent['options']['data'],{'name':'New member','phone_number':''})
         self.assertNotIn('app_metadata',sent)
         self.assertEqual(self.client.post('/api/auth/signup',json=payload|{'role':'admin'},headers=self.headers).status_code,422)
 
@@ -98,6 +98,15 @@ class AccountTests(unittest.TestCase):
         self.assertEqual(self.client.post('/api/auth/logout',headers=self.headers).status_code,200)
         self.assertIsNone(self.client.cookies.get('fh_access'))
         self.auth.auth.admin.sign_out.assert_called_once_with('secret-access',scope='local')
+
+    def test_profile_can_only_update_own_contact_metadata(self):
+        self.client.cookies.set('fh_access','valid-session')
+        self.db.auth.admin.update_user_by_id.return_value = SimpleNamespace(user=user())
+        response=self.client.patch('/api/auth/profile',json={'name':'New name','phone_number':'631-555-0123'},headers=self.headers)
+        self.assertEqual(response.status_code,200)
+        self.db.auth.admin.update_user_by_id.assert_called_once_with('account-id',{'user_metadata':{'name':'New name','phone_number':'631-555-0123'}})
+        self.assertEqual(self.client.patch('/api/auth/profile',json={'name':'New name','role':'admin'},headers=self.headers).status_code,422)
+        self.assertEqual(self.client.patch('/api/auth/profile',json={'name':'New name','phone_number':'invalid'},headers=self.headers).status_code,422)
 
     def test_invalid_session_is_not_trusted(self):
         self.client.cookies.set('fh_access','forged')
