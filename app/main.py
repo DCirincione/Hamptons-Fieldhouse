@@ -93,3 +93,13 @@ def booking_staff(request: Request, db=Depends(get_auth_client)):
 def account(request: Request):
     return templates.TemplateResponse(request=request, name='account.html',
         context={'title': 'Your Account'}, headers={'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex, nofollow'})
+
+
+@app.get("/privacy", include_in_schema=False)
+def privacy(request: Request):
+    return templates.TemplateResponse(request=request, name="privacy.html", context={"title": "Privacy & Cookies"})
+
+
+@app.get("/accessibility", include_in_schema=False)
+def accessibility(request: Request):
+    return templates.TemplateResponse(request=request, name="accessibility.html", context={"title": "Accessibility"})

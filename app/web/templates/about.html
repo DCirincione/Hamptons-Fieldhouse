@@ -24,5 +24,31 @@
       <p>His coaching experience also expanded to international play, as Morais served as the head coach of the Puerto Rico Women's National Team in 2010; this included coaching two friendlies against regional power Mexico along with leading Puerto Rico in the 2010 Central American and Caribbean Games in Venezuela.</p>
     </div>
   </section>
+  <section class="facility-gallery card" aria-labelledby="gallery-title">
+    <div class="gallery-heading">
+      <div><p class="eyebrow">TAKE A LOOK AROUND</p><h2 id="gallery-title">Inside the Fieldhouse</h2></div>
+      <p>Room to play. Space to grow.<br>Explore the place where it all happens.</p>
+    </div>
+    <div class="gallery-grid">
+      <a class="gallery-photo" href="/assets/photos/fieldhouse-turf.jpg" data-gallery-photo data-caption="Room to play" aria-label="View full-size photo of the indoor turf field">
+        <img src="/assets/photos/fieldhouse-turf.jpg" width="1200" height="800" loading="lazy" alt="Indoor turf field with soccer balls, a goal, and overhead safety netting">
+        <span class="gallery-caption"><span><small>THE TURF</small><strong>Room to play</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      </a>
+      <a class="gallery-photo" href="/assets/photos/fieldhouse-hero.jpg" data-gallery-photo data-caption="Welcome to our house" aria-label="View full-size photo of the Fieldhouse banner and flags">
+        <img src="/assets/photos/fieldhouse-hero.jpg" srcset="/assets/photos/fieldhouse-hero-small.jpg 960w, /assets/photos/fieldhouse-hero.jpg 1920w" sizes="(max-width: 700px) 100vw, 45vw" width="1920" height="1280" loading="lazy" alt="Hamptons Fieldhouse banner between American and Brazilian flags above the goal">
+        <span class="gallery-caption"><span><small>HAMPTONS FIELDHOUSE</small><strong>Welcome to our house</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      </a>
+    </div>
+  </section>
 </div>
+<dialog class="gallery-viewer" aria-label="Facility photo viewer">
+  <form method="dialog"><button class="gallery-close" aria-label="Close photo viewer" autofocus>Close ×</button></form>
+  <img class="gallery-full-image" alt="">
+  <div class="gallery-viewer-controls">
+    <button type="button" data-gallery-prev aria-label="Previous photo">←</button>
+    <p class="gallery-viewer-caption" aria-live="polite"></p>
+    <button type="button" data-gallery-next aria-label="Next photo">→</button>
+  </div>
+</dialog>
+<script src="/assets/facility-gallery.js?v=1" defer></script>
 {% endblock %}

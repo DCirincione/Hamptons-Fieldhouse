@@ -8,7 +8,9 @@
   <title>{{ title }} | Hamptons Fieldhouse</title>
   <link rel="icon" href="/assets/hamptons-fieldhouse-logo.png" type="image/png">
   <link rel="stylesheet" href="/assets/global.css?v=6">
-  <link rel="stylesheet" href="/assets/styles.css?v=47">
+  <link rel="stylesheet" href="/assets/styles.css?v=48">
+  <link rel="stylesheet" href="/assets/site-preferences.css?v=1">
+  <script src="/assets/site-preferences.js?v=1" defer></script>
 </head>
 <body id="top">
   <a class="skip-link" href="#main">Skip to content</a>
@@ -56,7 +58,30 @@
         </div>
       </section>
     </div>
-    <div class="footer-bottom"><span>© Hamptons Fieldhouse 2026©</span><a href="#top">Back to top ↑</a></div>
+    <div class="footer-bottom"><span>© Hamptons Fieldhouse 2026©</span><a href="/privacy">Privacy &amp; Cookies</a><button type="button" class="footer-privacy-button" data-privacy-open hidden>Cookie notice</button><a href="/accessibility">Accessibility</a><a href="#top">Back to top ↑</a></div>
   </footer>
+  <section id="privacy-notice" class="privacy-notice" aria-labelledby="privacy-notice-title" hidden>
+    <h2 id="privacy-notice-title">Your privacy matters</h2>
+    <p>We use essential cookies for sign-in and browser storage to remember this notice and your accessibility settings. We don’t sell your personal data or share it for advertising. Service providers help us operate the website.</p>
+    <p>No advertising or analytics cookies are used on this site. <a href="/privacy">Read our Privacy &amp; Cookie Policy</a>.</p>
+    <button type="button" class="button" id="privacy-dismiss">Got it</button>
+  </section>
+  <button type="button" id="accessibility-launcher" class="accessibility-launcher" aria-haspopup="dialog" aria-controls="accessibility-dialog" hidden>
+    <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="4" r="2"/><path d="M3 8l9 2 9-2M12 10v6m0-3l-5 9m5-9l5 9"/></svg><span>Accessibility</span>
+  </button>
+  <dialog id="accessibility-dialog" class="accessibility-dialog" aria-labelledby="accessibility-title">
+    <div class="preferences-heading"><h2 id="accessibility-title">Accessibility options</h2><button type="button" id="accessibility-close" aria-label="Close accessibility options" autofocus>✕</button></div>
+    <p>Adjust your reading experience. Your choices are saved in this browser.</p>
+    <div class="preference-options">
+      <label><input type="checkbox" data-preference="largeText"> Larger text</label>
+      <label><input type="checkbox" data-preference="highContrast"> Higher contrast</label>
+      <label><input type="checkbox" data-preference="underlineLinks"> Underline links</label>
+      <label><input type="checkbox" data-preference="reduceMotion"> Reduce motion</label>
+    </div>
+    <button type="button" class="button" id="accessibility-reset">Reset settings</button>
+    <p id="preference-status" role="status"></p>
+    <p><a href="/accessibility">Accessibility statement &amp; assistance</a></p>
+    <p>Need help booking? <a href="tel:+16312784374">Call (631) 278-4374</a>.</p>
+  </dialog>
 </body>
 </html>

@@ -569,3 +569,41 @@ body.booking-modal-open { overflow: hidden; }
 .customer-cancel-button:hover:not(:disabled) { background: #fff3f4; border-color: #c76c79; }
 .customer-cancel-button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 .customer-cancel-button:disabled { opacity: .55; cursor: wait; }
+
+/* About Us facility gallery. */
+.facility-gallery { margin-top: 60px; }
+.gallery-heading { display: flex; align-items: end; justify-content: space-between; gap: 24px; margin-bottom: 28px; }
+.gallery-heading .eyebrow { color: var(--red); margin-bottom: 10px; }
+.about-content .gallery-heading h2 { margin-bottom: 0; }
+.gallery-heading > p { margin: 0; color: var(--muted); }
+.gallery-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 18px; }
+.gallery-photo { position: relative; display: block; overflow: hidden; min-width: 0; border-radius: 18px; background: var(--photo-fallback); aspect-ratio: 1.15; color: var(--white); }
+.gallery-photo::after { content: ''; position: absolute; inset: 0; background: linear-gradient(transparent 40%, rgb(0 15 36 / 85%)); pointer-events: none; }
+.gallery-photo img { width: 100%; height: 100%; object-fit: cover; transition: transform .4s ease; }
+.gallery-photo:hover img { transform: scale(1.04); }
+.gallery-photo:focus-visible { outline: 3px solid var(--red); outline-offset: 5px; }
+.gallery-caption { position: absolute; inset: auto 24px 24px; z-index: 1; display: flex; align-items: end; justify-content: space-between; gap: 12px; }
+.gallery-caption small { display: block; font-size: 10px; font-weight: 700; letter-spacing: 2px; margin-bottom: 8px; }
+.about-content .gallery-caption strong { color: var(--white); font-family: var(--font-heading); font-weight: 400; font-size: clamp(22px, 2.5vw, 32px); }
+.gallery-expand { display: grid; place-items: center; flex-shrink: 0; width: 40px; height: 40px; border: 1px solid rgb(255 255 255 / 65%); border-radius: 50%; font-size: 24px; }
+.gallery-is-open { overflow: hidden; }
+.gallery-viewer { padding: 16px; border: 1px solid var(--dark-line); background: var(--navy); color: var(--white); width: min(1100px, 94vw); max-height: 94dvh; }
+.gallery-viewer::backdrop { background: rgb(0 10 25 / 88%); }
+.gallery-viewer form { display: flex; justify-content: end; margin-bottom: 12px; }
+.gallery-viewer button { background: transparent; color: var(--white); border: 1px solid var(--dark-line); min-height: 44px; min-width: 44px; padding: 8px 16px; cursor: pointer; }
+.gallery-viewer button:hover { background: var(--navy-hover); }
+.gallery-viewer button:focus-visible { outline: 2px solid var(--white); outline-offset: 3px; }
+.gallery-full-image { display: block; width: 100%; height: min(65dvh, 720px); object-fit: contain; }
+.gallery-viewer-controls { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; }
+.gallery-viewer-caption { margin: 0; text-align: center; font-size: 14px; color: var(--on-dark); }
+@media (max-width: 700px) {
+  .facility-gallery { margin-top: 38px; }
+  .gallery-heading { align-items: start; flex-direction: column; gap: 14px; }
+  .gallery-grid { grid-template-columns: 1fr; gap: 14px; }
+  .gallery-photo { aspect-ratio: 4 / 3; }
+  .gallery-caption { inset: auto 18px 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .gallery-photo img { transition: none; }
+  .gallery-photo:hover img { transform: none; }
+}
