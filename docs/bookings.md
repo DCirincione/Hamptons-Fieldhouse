@@ -18,8 +18,10 @@ Confirmed with the client October 1, 2026:
 - Venmo/cash/other payment methods require staff approval. Submitting a request holds
   its resources immediately. Approval retains the hold; cancellation/decline
   releases it. Holds do not expire automatically.
-- Square is not integrated. In the future, verified successful Square payments
-  should confirm automatically through a separate server-side payment flow.
+- Square Sandbox card checkout is implemented behind `SQUARE_BOOKING_PAYMENTS_ENABLED`.
+  Verified completed payments mark only their included dates paid and confirmed.
+  Paying for one session covers the earliest selected date; paying for all covers every selected date.
+  Unpaid dates continue to need staff approval. See [Square setup](square.md).
 
 Editable implementation defaults: starts on the hour, at least one hour's notice,
 up to 90 days ahead. Starts must fit entirely within the effective hours for that date. With the default schedule, the last rental starts at 10 PM and the last party at 9 PM (ends 10:30 PM). Custom durations require contacting staff. All dates/times are interpreted
@@ -52,7 +54,8 @@ changed price rolls back all new dates. Retries with the same request key are
 idempotent and owner-checked. The review shows per-date and full-series totals.
 Repeated requests offer payment for one session now or all sessions now. The choice
 and calculated initial amount are saved in the request payload and shown to staff.
-This is a payment preference, not a charge or proof of payment; Square remains deferred.
+For manual methods this remains a payment preference. Square checkout charges the selected dates only;
+a browser selection or successful tokenization is never treated as proof of payment.
 The admin queue identifies repeating requests; staff approves/cancels individual
 dates, with changes appearing on the customer's next refresh.
 
@@ -71,7 +74,9 @@ dates, with changes appearing on the customer's next refresh.
 Prices are calculated again in the database, with the displayed expected total
 checked before reserving. Changed prices require a refreshed review. Booking extras
 store quantity and price snapshots; food discounts are stored on the booking.
-Payment status remains `unpaid`; approving a booking does not record a payment.
+Plain staff approval leaves payment status `unpaid`. Staff can choose **Confirm & mark paid**
+for a pending manual-payment booking, or **Mark as paid** for an already confirmed one.
+These actions record full payment received for that date without charging the customer. A verified completed Square payment marks its dates `paid` and `confirmed`.
 
 ## Setup and activation
 
@@ -175,8 +180,8 @@ On older installations missing `booking_block_series` or `series_id`, apply
 `scripts/sql/repair_manual_blocks.sql` to enable manual block creation and release.
 This rerunnable repair preserves hours, bookings, and existing blocks. It is
 separate from the already-applied hours update. Calendar reads and hours editing
-do not require this repair. Square payment handling remains deferred; the
-calendar uses booking status, and confirmation does not mark a payment paid.
+do not require this repair. The calendar uses booking status. Staff confirmation does not mark a payment paid;
+verified Square payment completion does.
 
 - Choose one or more spaces and a private customer/reason label.
 - Use **Individual dates and times** to enter several appointments with different
@@ -235,7 +240,8 @@ page; it does not verify completion or attach signed waivers to registrations.
 If the original domain moves to this app, preserve the waiver route or obtain
 the provider's permanent URL first.
 
-Printful store/account details are still pending from the client.
+Printful catalog browsing is connected. Merchandise checkout and fulfillment remain disabled;
+this Square change implements booking payments only.
 
 Customers can cancel their own upcoming pending or approved bookings from My Bookings.
 Cancellation applies to one date, releases its resource slots atomically, and leaves

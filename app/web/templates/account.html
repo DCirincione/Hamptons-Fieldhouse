@@ -21,12 +21,12 @@
   <div id="account-summary" hidden>
     <section class="card customer-bookings" aria-labelledby="my-bookings-title">
       <div class="customer-section-heading"><div><p class="eyebrow">YOUR TIME AT THE FIELDHOUSE</p><h2 id="my-bookings-title">My Bookings</h2></div><a class="button" href="/space-rentals">Book a time ↗</a></div>
-      <p>Venmo and cash requests hold your time while staff reviews them. Your status updates here after approval.</p>
+      <p>Paid Square bookings are approved automatically. Unpaid requests hold your time while staff reviews them.</p>
       <div class="customer-booking-toolbar"><div class="staff-section-nav"><button type="button" data-booking-view="upcoming" aria-pressed="true">Upcoming</button><button type="button" data-booking-view="history" aria-pressed="false">Past &amp; cancelled</button></div><button type="button" class="staff-utility" id="my-bookings-refresh">Refresh</button></div>
       <p id="my-bookings-status" role="status" aria-live="polite"></p>
       <div id="my-bookings-list"></div>
       <div class="staff-actions"><button type="button" id="my-bookings-previous" class="staff-utility" hidden>← Previous</button><button type="button" id="my-bookings-next" class="staff-utility" hidden>Next →</button></div>
-      <aside class="customer-repeat-note"><h3>Make it a regular thing</h3><p>Choose a time and click the additional dates you want on the calendar when booking. Each date is held pending staff approval.</p><a href="/space-rentals">Request recurring times →</a></aside>
+      <aside class="customer-repeat-note"><h3>Make it a regular thing</h3><p>Choose a time and select additional dates on the calendar. Pay for the first date or all dates; only paid dates are approved automatically.</p><a href="/space-rentals">Request recurring times →</a></aside>
     </section>
     <section class="card customer-profile" aria-labelledby="my-profile-title"><h2 id="my-profile-title">My Profile</h2>
       <form id="customer-profile-form" class="account-form">
@@ -41,5 +41,6 @@
   <p id="account-status" role="status" aria-live="polite"></p>
   <noscript>Please enable JavaScript to create an account or sign in.</noscript>
 </div>
-<script src="/assets/customer-portal.js?v=6" defer></script>
+<script src="/assets/square-payments.js?v=5" defer></script>
+<script src="/assets/customer-portal.js?v=7" defer></script>
 {% endblock %}

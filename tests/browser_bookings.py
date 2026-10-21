@@ -18,6 +18,7 @@ starts = target.isoformat()
 requests = []
 errors = []
 staff_state = 'pending'
+staff_payment = 'unpaid'
 schedule_unavailable = False
 block_requests = []
 schedule_blocks = []
@@ -35,7 +36,7 @@ with patch('app.main.get_rental_catalog', return_value=catalog), TestClient(app)
     page.on('pageerror', lambda error: errors.append(str(error)))
     def route_handler(route):
         from urllib.parse import urlparse, parse_qs
-        global staff_state, signed_in
+        global staff_state, staff_payment, signed_in
         request = route.request
         parsed = urlparse(request.url)
         if parsed.path == '/api/auth/me':
@@ -71,9 +72,12 @@ with patch('app.main.get_rental_catalog', return_value=catalog), TestClient(app)
             route.fulfill(json={'removed':1})
         elif parsed.path == '/api/bookings/staff':
             assert request.headers.get('x-fieldhouse-request') == '1'
-            route.fulfill(json=[] if staff_state == 'cancelled' else [dict(id='test-id', status=staff_state, offerings={'name':'Full Field'}, starts_at=starts, ends_at=(target+timedelta(hours=1)).isoformat(), first_name='<script>test</script>', last_name='Customer',party_size=10,email='test@example.com',phone_number='6315550123',total_price_cents=20000,payment_method='venmo',payment_status='unpaid',own_food=False,notes='Test note',booking_line_items=[])])
+            route.fulfill(json=[] if staff_state == 'cancelled' else [dict(id='test-id', status=staff_state, offerings={'name':'Full Field'}, starts_at=starts, ends_at=(target+timedelta(hours=1)).isoformat(), first_name='<script>test</script>', last_name='Customer',party_size=10,email='test@example.com',phone_number='6315550123',total_price_cents=20000,payment_method='venmo',payment_status=staff_payment,own_food=False,notes='Test note',booking_line_items=[])])
         elif parsed.path == '/api/bookings/staff/test-id':
-            staff_state = 'confirmed' if request.post_data_json['action'] == 'approve' else 'cancelled'
+            action = request.post_data_json['action']
+            if action in ('approve','approve_paid'): staff_state = 'confirmed'
+            elif action == 'cancel': staff_state = 'cancelled'
+            if action in ('approve_paid','mark_paid'): staff_payment = 'paid'
             route.fulfill(json={'status':staff_state})
         elif parsed.path == '/api/bookings/availability':
             slug = parse_qs(parsed.query)['service'][0]
@@ -288,10 +292,25 @@ with patch('app.main.get_rental_catalog', return_value=catalog), TestClient(app)
 
     assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
     page.locator('.staff-booking summary').click()
+    page.get_by_role('button',name='Confirm & mark paid',exact=True).click()
+    page.wait_for_function("document.querySelector('.staff-booking summary')?.textContent.includes('Confirmed')")
+    assert staff_payment == 'paid'
+    assert page.get_by_role('button',name='Mark as paid',exact=True).count() == 0
+    # A separate unpaid fixture exercises approval first, followed by recording payment.
+    staff_state, staff_payment = 'pending', 'unpaid'
+    page.locator('#staff-refresh').click()
+    page.wait_for_function("document.querySelector('.staff-booking summary')?.textContent.includes('Awaiting confirmation')")
+    page.locator('.staff-booking summary').click()
     page.get_by_role('button',name='Confirm booking').click()
     page.wait_for_function("document.querySelector('.staff-booking summary')?.textContent.includes('Confirmed')")
     assert page.locator('#schedule-calendar .calendar-pending').count() == 0
     assert page.locator('#schedule-calendar .calendar-confirmed').inner_text() == '✓'
+    assert staff_payment == 'unpaid'
+    page.locator('.staff-booking summary').click()
+    page.get_by_role('button',name='Mark as paid',exact=True).click()
+    page.wait_for_function("document.querySelector('.staff-booking p')?.textContent.includes('venmo · paid')")
+    assert staff_payment == 'paid'
+    assert page.get_by_role('button',name='Mark as paid',exact=True).count() == 0
     page.locator('.staff-booking summary').click()
     page.get_by_role('button',name='Cancel & release time').click()
     page.wait_for_function("document.querySelector('#staff-status').textContent === 'No active bookings this month.'")

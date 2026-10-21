@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -18,6 +19,13 @@ class Settings(BaseSettings):
     supabase_service_role_key: SecretStr = SecretStr("")
     printful_api_token: SecretStr = SecretStr("")
     printful_store_id: str = ""
+    square_environment: Literal["sandbox", "production"] = "sandbox"
+    square_booking_payments_enabled: bool = False
+    square_sandbox_webhook_signature_key: SecretStr = SecretStr("")
+    square_webhook_url: str = ""
+    square_sandbox_access_token: SecretStr = SecretStr("")
+    square_sandbox_application_id: str = ""
+    square_sandbox_location_id: str = ""
     site_url: str = "http://localhost:8000"
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
 

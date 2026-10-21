@@ -628,7 +628,20 @@ body.booking-modal-open { overflow: hidden; }
 
 .customer-booking-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
 .customer-booking-footer .customer-booking-note { flex: 1 1 240px; margin: 0; }
-.customer-booking-actions { display: flex; justify-content: flex-end; margin-left: auto; }
+.customer-booking-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; margin-left: auto; }
+.customer-booking-actions .button { padding: 9px 14px; font-size: 13px; }
+.square-payment-overlay { position: fixed; inset: 0; z-index: 1100; display: grid; place-items: center; background: rgb(0 0 0 / 55%); }
+.square-payment-dialog { position: relative; background: #fff; width: min(480px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); overflow: auto; box-sizing: border-box; border: 1px solid var(--line); border-radius: 18px; padding: 28px; color: var(--ink); }
+.square-payment-dialog h2 { margin-right: 28px; }
+.square-payment-dialog p { font-size: 14px; }
+.square-payment-dialog .square-payment-total { font-size: 20px; font-weight: 700; }
+.square-payment-dialog .square-pay-button { width: 100%; }
+.square-payment-success { text-align: center; }
+.square-payment-success h2 { margin-right: 0; }
+.square-payment-success-icon { display: grid; place-items: center; width: 64px; height: 64px; margin: 0 auto 20px; border-radius: 50%; background: #e5f3e9; color: #235d36; font-size: 36px; font-weight: 700; }
+.square-payment-success .square-reserved-message { font-size: 18px; color: var(--navy); }
+.square-payment-success > .button { display: flex; justify-content: center; margin-top: 24px; }
+.square-payment-done { margin-top: 12px; }
 .customer-booking-details > p[role="status"]:empty { display: none; }
 .customer-cancel-button { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 9px 16px; border: 1px solid #e8c9cd; border-radius: 8px; background: #fff; color: #9a2839; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s, border-color .15s; }
 .customer-cancel-button:hover:not(:disabled) { background: #fff3f4; border-color: #c76c79; }

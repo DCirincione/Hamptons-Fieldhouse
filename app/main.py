@@ -13,6 +13,7 @@ from app.routes.health import router as health_router
 from app.routes.contact import router as contact_router
 from app.routes.schedule import router as schedule_router
 from app.routes.bookings import router as bookings_router
+from app.routes.square import router as square_router
 from app.routes.gallery import load_gallery_photos, router as gallery_router
 from app.routes.merch import router as merch_router
 from app.routes.rentals import get_rental_catalog
@@ -31,11 +32,30 @@ app.include_router(health_router, prefix="/api")
 app.include_router(contact_router, prefix="/api")
 app.include_router(schedule_router, prefix="/api")
 app.include_router(bookings_router, prefix="/api")
+app.include_router(square_router, prefix="/api")
 app.include_router(gallery_router, prefix="/api")
 app.include_router(merch_router, prefix="/api")
 web_directory = Path(__file__).resolve().parent / "web"
 app.mount("/assets", StaticFiles(directory=web_directory / "assets"), name="assets")
 templates = Jinja2Templates(directory=web_directory / "templates")
+
+
+@app.middleware('http')
+async def payment_page_policy(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path in ('/account', '/space-rentals'):
+        response.headers['Content-Security-Policy'] = (
+            "default-src 'self'; base-uri 'self'; object-src 'none'; "
+            "script-src 'self' https://sandbox.web.squarecdn.com; "
+            "frame-src 'self' https://sandbox.web.squarecdn.com https://api.squareupsandbox.com; "
+            "connect-src 'self' https://sandbox.web.squarecdn.com https://pci-connect.squareupsandbox.com https://o160250.ingest.sentry.io; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://sandbox.web.squarecdn.com; "
+            "font-src 'self' https://fonts.gstatic.com https://square-fonts-production-f.squarecdn.com https://d1g145x70srn7h.cloudfront.net https://cash-f.squarecdn.com; "
+            "img-src 'self' data: https:; form-action 'self' https://api.squareupsandbox.com; frame-ancestors 'self'"
+        )
+    if request.url.path.startswith('/api/square/'):
+        response.headers['Cache-Control'] = 'no-store'
+    return response
 
 
 @app.get("/", include_in_schema=False)

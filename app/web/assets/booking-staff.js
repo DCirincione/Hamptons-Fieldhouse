@@ -70,11 +70,20 @@
           ? `\nPayment choice: ${booking.payment_plan === 'all_sessions' ? 'All sessions now' : 'One session now'} · ${money(booking.initial_payment_cents)} requested now for the ${booking.session_count}-session request (not per date). Payment not verified by this choice.` : '';
         details.textContent = `${repeating ? 'Repeating schedule · approve each date separately\n' : ''}${date(booking.starts_at)} – ${date(booking.ends_at)} Eastern\n${booking.first_name} ${booking.last_name} · ${booking.party_size} participants\n${booking.email} · ${booking.phone_number}\n${money(booking.total_price_cents)} · ${booking.payment_method} · ${booking.payment_status}${paymentChoice}\n${booking.own_food ? 'Bringing own food' : 'Standard package'}${extras ? ` · ${extras}` : ''}\nReference: ${booking.id}${booking.notes ? `\nNotes: ${booking.notes}` : ''}`;
         const actions = document.createElement('div'); actions.className = 'staff-actions';
-        (booking.status === 'pending' ? ['approve', 'cancel'] : ['cancel']).forEach(action => {
+        const availableActions = booking.status === 'pending' ? ['approve'] : [];
+        if (booking.payment_status === 'unpaid' && ['venmo','cash','other'].includes(booking.payment_method)) {
+          availableActions.push(booking.status === 'pending' ? 'approve_paid' : 'mark_paid');
+        }
+        availableActions.push('cancel');
+        const labels = {approve:'Confirm booking', approve_paid:'Confirm & mark paid', mark_paid:'Mark as paid', cancel:'Cancel & release time'};
+        availableActions.forEach(action => {
           const button = document.createElement('button'); button.type = 'button'; button.className = 'button';
-          button.textContent = action === 'approve' ? 'Confirm booking' : 'Cancel & release time';
+          button.textContent = labels[action];
           button.addEventListener('click', async () => {
-            if (!window.confirm(action === 'approve' ? 'Confirm this booking after checking payment arrangements?' : 'Cancel this booking and release its time?')) return;
+            const prompt = action === 'approve_paid' || action === 'mark_paid'
+              ? `${action === 'approve_paid' ? 'Confirm this booking and record' : 'Record'} ${money(booking.total_price_cents)} as paid via ${booking.payment_method}? Only continue if you have received the full payment for this date. This does not charge the customer.`
+              : action === 'approve' ? 'Confirm this booking after checking payment arrangements? Payment status will stay unchanged.' : 'Cancel this booking and release its time?';
+            if (!window.confirm(prompt)) return;
             actions.querySelectorAll('button').forEach(b => b.disabled = true);
             try { await call(`/${booking.id}`, {method: 'POST', body: JSON.stringify({action})}); await load(); }
             catch (error) { $('staff-status').textContent = error.message; actions.querySelectorAll('button').forEach(b => b.disabled = false); }

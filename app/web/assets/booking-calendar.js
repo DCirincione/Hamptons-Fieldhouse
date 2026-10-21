@@ -5,6 +5,10 @@
   const service = $('booking-service');
   const form = $('reservation-form');
   const fields = form.elements;
+  window.fieldhouseSquare.settings().then(config => {
+    $('square-booking-option').hidden = !config.enabled;
+    $('square-booking-option').disabled = !config.enabled;
+  }).catch(() => {});
   let customer = null;
   function updateCustomer(user) {
     customer = user;
@@ -203,7 +207,7 @@
     $('pay-one-amount').textContent = `${money(amount)} now · ${money(amount * (count - 1))} for later sessions`;
     $('pay-all-amount').textContent = `${money(amount * count)} for all ${count} sessions`;
     const payAll = count > 1 && fields.payment_plan.value === 'all_sessions';
-    $('booking-payment-summary').textContent = count > 1 ? `Payment to arrange now: ${money(amount * (payAll ? count : 1))}.${payAll ? '' : ' Remaining sessions are paid separately; arrange timing with staff.'}` : '';
+    $('booking-payment-summary').textContent = count > 1 ? `${fields.payment_method.value === 'square' ? 'Pay with Square' : 'Payment to arrange now'}: ${money(amount * (payAll ? count : 1))}.${payAll ? '' : ' This covers the first date. Remaining sessions are paid separately.'}` : '';
     $('booking-total').textContent = count > 1 ? `${money(amount)} per date × ${count} dates · Total: ${money(amount * count)}` : `Total: ${money(amount)}`;
     $('booking-repeat-summary').textContent = `${count} date${count === 1 ? '' : 's'} · Each date is checked for availability and held pending staff approval.`;
     return amount;
@@ -251,20 +255,29 @@
       }
       form.hidden = true;
       const receipt = $('booking-receipt');
-      const bookings = result.bookings;
+      const bookings = [...result.bookings].sort((a,b) => new Date(a.starts_at) - new Date(b.starts_at));
+      const square = body.payment_method === 'square';
       const lines = [bookings.every(b => b.status === 'pending') ? 'Your time is held — awaiting staff approval' : 'Your booking request',
         `${data.name} · ${bookings.length} date${bookings.length === 1 ? '' : 's'}`,
         ...bookings.map(b => `${dateLabel(nyDate(b.starts_at))} · ${time(b.starts_at)}–${time(b.ends_at)} Eastern`),
-        `Total: ${money(result.total_price_cents)} · Payment not collected online`,
-        ...(bookings.length > 1 ? [`Selected payment: ${body.payment_plan === 'all_sessions' ? 'all sessions' : 'one session'} · ${money(body.payment_plan === 'all_sessions' ? result.total_price_cents : bookings[0].total_price_cents)} to arrange with staff now.${body.payment_plan === 'one_session' ? ' Remaining sessions are paid separately.' : ''}`] : []),
+        `Total: ${money(result.total_price_cents)} · ${square ? 'Continue to Square to pay' : 'Payment arranged with staff'}`,
+        ...(bookings.length > 1 ? [`Selected payment: ${body.payment_plan === 'all_sessions' ? 'all sessions' : 'first session'} · ${money(body.payment_plan === 'all_sessions' ? result.total_price_cents : bookings[0].total_price_cents)}.${body.payment_plan === 'one_session' ? ' Remaining sessions stay pending until paid or approved by staff.' : ''}`] : []),
         `Request reference: ${result.request_id}`,
-        'Track approval for each date in My Bookings. Contact 631-278-4374 to arrange payment.'];
+        'Track each date and pay unpaid bookings in My Bookings. Contact 631-278-4374 for help.'];
       receipt.replaceChildren(...lines.map((text, i) => { const element = document.createElement(i ? 'p' : 'h3'); element.textContent = text; return element; }));
       const accountLink = document.createElement('a'); accountLink.href = '/account'; accountLink.className = 'button'; accountLink.textContent = 'View My Bookings →'; receipt.append(accountLink);
       receipt.hidden = false;
       await load();
       receipt.focus();
       lastBody = requestId = null;
+      if (square) {
+        const paidDates = body.payment_plan === 'all_sessions' ? bookings : bookings.slice(0,1);
+        const ids = paidDates.map(b => b.id || b.reference);
+        await window.fieldhouseSquare.open(ids, () => {
+          receipt.querySelector('h3').textContent = 'Payment successful — paid dates approved';
+          receipt.querySelectorAll('p')[bookings.length + 1].textContent = `${paidDates.length} paid date${paidDates.length === 1 ? '' : 's'} approved. See My Bookings for each date’s status.`;
+        });
+      }
     } catch (error) {
       $('reservation-status').textContent = `${error.message || 'Connection interrupted.'} If your connection was interrupted, retry without changing your details to avoid a duplicate request.`;
     } finally { setBusy(false); }

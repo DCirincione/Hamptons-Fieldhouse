@@ -40,7 +40,7 @@ class Reservation(BaseModel):
     party_size: int = Field(ge=1, le=200, strict=True)
     extra_pizzas: int = Field(default=0, ge=0, le=20, strict=True)
     own_food: bool = False
-    payment_method: Literal["venmo", "cash", "other"]
+    payment_method: Literal["venmo", "cash", "other", "square"]
     payment_plan: Literal["one_session", "all_sessions"] = "one_session"
     additional_dates: list[date] = Field(default_factory=list, max_length=29)
     notes: str = Field(default="", max_length=3000)
@@ -70,6 +70,8 @@ def rpc(db: Client, function: str, params: dict):
             raise HTTPException(409, "The price has changed. Refresh the calendar and review your total.") from None
         if code == "22023":
             raise HTTPException(422, "Please check your booking details and choose an available time.") from None
+        if code == 'P0001':
+            raise HTTPException(409, 'A Square payment is processing. Check payment status before changing this booking.') from None
         raise HTTPException(503, "Online booking is temporarily unavailable. Please call 631-278-4374.") from None
     except HTTPError:
         raise HTTPException(503, "We couldn’t reach the booking service. Please retry with the same details.") from None
@@ -92,6 +94,11 @@ def reserve(data: Reservation, user=Depends(verified_customer), db: Client = Dep
     dates.sort()
     count = len(dates)
     payload = data.model_dump(mode="json", exclude={"additional_dates"})
+    # Existing reservation RPCs accept manual methods. A Square choice still
+    # creates unpaid pending holds; only the verified payment RPC approves them.
+    if data.payment_method == 'square':
+        payload['payment_method'] = 'other'
+        payload['requested_payment_method'] = 'square'
     # Identity is taken from the verified session, never a customer-supplied ID or email.
     payload["email"] = user.email
     payload["payment_plan"] = data.payment_plan if count > 1 else "one_session"
@@ -126,7 +133,11 @@ def cancel_my_booking(booking_id: UUID, user=Depends(verified_customer), db: Cli
         ).eq("customer_user_id", str(user.id)).in_("status", ["pending", "confirmed"]).gt(
             "starts_at", datetime.now(timezone.utc).isoformat()
         ).execute().data
-    except (APIError, HTTPError):
+    except APIError as exc:
+        if exc.code == 'P0001':
+            raise HTTPException(409, 'A Square payment is processing. Use Check payment status before cancelling.') from None
+        raise HTTPException(503, "Could not cancel your booking. Please refresh and try again.") from None
+    except HTTPError:
         raise HTTPException(503, "Could not cancel your booking. Please refresh and try again.") from None
     if not rows:
         raise HTTPException(404, "No upcoming booking available to cancel. Refresh your bookings to check its status.")
@@ -135,7 +146,7 @@ def cancel_my_booking(booking_id: UUID, user=Depends(verified_customer), db: Cli
 
 class Review(BaseModel):
     model_config = ConfigDict(extra="forbid")
-    action: Literal["approve", "cancel"]
+    action: Literal["approve", "cancel", "approve_paid", "mark_paid"]
 
 
 @router.get("/staff", dependencies=[Depends(require_staff)])
@@ -175,4 +186,26 @@ def staff_bookings(response: Response, month: date | None = None, db: Client = D
 
 @router.post("/staff/{booking_id}", dependencies=[Depends(require_staff)])
 def review_booking(booking_id: UUID, data: Review, db: Client = Depends(get_booking_db)):
+    if data.action in ('approve_paid', 'mark_paid'):
+        changes = {'payment_status': 'paid'}
+        if data.action == 'approve_paid':
+            changes['status'] = 'confirmed'
+        try:
+            # Record money already received manually. Never synthesize a Square
+            # payment or overwrite a refunded/cancelled booking. One atomic write
+            # prevents confirmation from succeeding without the payment update.
+            rows = db.table('bookings').update(changes).eq('id', str(booking_id)).eq(
+                'status', 'pending' if data.action == 'approve_paid' else 'confirmed'
+            ).eq('payment_status', 'unpaid').in_(
+                'payment_method', ['venmo', 'cash', 'other']
+            ).execute().data
+        except APIError as exc:
+            if exc.code == 'P0001':
+                raise HTTPException(409, 'A Square payment is processing. Check payment status before recording a manual payment.') from None
+            raise HTTPException(503, 'Could not record payment. Refresh and try again.') from None
+        except HTTPError:
+            raise HTTPException(503, 'Could not record payment. Refresh and try again.') from None
+        if not rows:
+            raise HTTPException(409, 'This booking has changed or is not eligible for manual payment. Refresh to check its status.')
+        return {'status': rows[0]['status'], 'payment_status': rows[0]['payment_status']}
     return rpc(db, "review_booking", {"p_id": str(booking_id), "p_action": data.action})

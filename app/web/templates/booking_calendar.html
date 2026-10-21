@@ -32,7 +32,7 @@
         <label>Email<input name="email" type="email" readonly autocomplete="email" required maxlength="254"></label>
         <label>Phone number<input name="phone_number" type="tel" autocomplete="tel" required minlength="7" maxlength="30"></label>
         <label><span id="party-size-label">Number of participants</span><input name="party_size" type="number" min="1" max="200" value="1" required></label>
-        <label>Payment method<select name="payment_method"><option value="venmo">Venmo — staff approval required</option><option value="cash">Cash — staff approval required</option><option value="other">Other — arrange with staff</option></select></label>
+        <label>Payment method<select name="payment_method"><option value="square" id="square-booking-option" hidden disabled>Card with Square — paid dates approved automatically (Sandbox)</option><option value="venmo" selected>Venmo — staff approval required</option><option value="cash">Cash — staff approval required</option><option value="other">Other — arrange with staff</option></select></label>
       </div>
       <div class="booking-repeat-options">
         <button type="button" class="button" id="toggle-additional-dates" aria-expanded="false" aria-controls="additional-dates-panel">Book More Dates</button>
@@ -60,9 +60,9 @@
         <legend>Payment for your repeated booking</legend>
         <label><input type="radio" name="payment_plan" value="one_session" checked><span><strong>Pay for one session now</strong><span id="pay-one-amount"></span></span></label>
         <label><input type="radio" name="payment_plan" value="all_sessions"><span><strong>Pay for all now</strong><span id="pay-all-amount"></span></span></label>
-        <p>Payment is arranged with staff using your selected payment method. No payment is collected online yet.</p>
+        <p>Paying for one session covers the first selected date. With Square, only paid dates are approved automatically; unpaid dates need staff approval.</p>
       </fieldset>
-      <div class="booking-review"><h3>Review your request</h3><div id="booking-breakdown"></div><p class="booking-total" id="booking-total"></p><p id="booking-payment-summary"></p><p>Your time will be held while staff reviews your booking and payment. This is not a confirmed reservation until staff approves it. No payment is collected on this website yet.</p></div>
+      <div class="booking-review"><h3>Review your request</h3><div id="booking-breakdown"></div><p class="booking-total" id="booking-total"></p><p id="booking-payment-summary"></p><p>Your dates are held when you submit. Successful Square payment approves the paid dates automatically. Unpaid dates remain pending staff approval.</p></div>
       <button class="button" type="submit" id="reserve-button">Request booking &amp; hold time ↗</button>
     </fieldset>
   </form>

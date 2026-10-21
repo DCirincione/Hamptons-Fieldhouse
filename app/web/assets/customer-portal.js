@@ -3,6 +3,23 @@
   let view = 'upcoming', offset = 0, timer = null, active = false, generation = 0, loading = false, cancelling = false;
   const money = cents => new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'}).format(cents/100);
   const date = value => new Date(value).toLocaleString('en-US', {timeZone:'America/New_York',dateStyle:'medium',timeStyle:'short'});
+  let squareEnabled = false;
+  window.fieldhouseSquare.settings().then(config => {
+    squareEnabled = config.enabled;
+    if (!squareEnabled) return;
+    const check = document.createElement('button'); check.type = 'button'; check.className = 'staff-utility'; check.textContent = 'Check payment status';
+    check.addEventListener('click', async () => {
+      check.disabled = true;
+      try {
+        const result = await window.fieldhouseSquare.reconcile();
+        await loadBookings();
+        $('my-bookings-status').textContent = result.processing ? 'Payment is still processing. Please check again shortly.' : 'Payment status checked. Paid dates are approved.';
+      } catch (error) { $('my-bookings-status').textContent = error.message; }
+      finally { check.disabled = false; }
+    });
+    $('my-bookings-refresh').after(check);
+    if (active) loadBookings(true);
+  }).catch(() => {});
   function sessionExpired() {
     active = false; generation++; clearInterval(timer);
     $('my-bookings-list').replaceChildren(); $('account-summary').hidden = true;
@@ -35,7 +52,7 @@
         times.textContent = `${startDay} · ${start.toLocaleTimeString('en-US', timeOptions)} – ${startDay === endDay ? '' : endDay + ' · '}${end.toLocaleTimeString('en-US', timeOptions)} Eastern`;
         top.append(title, times, status);
         const body = document.createElement('div'); body.className = 'customer-booking-details';
-        const info = document.createElement('p'); info.textContent = `${money(booking.total_price_cents)} · ${booking.payment_method === 'venmo' ? 'Venmo' : booking.payment_method === 'cash' ? 'Cash' : 'Other payment'} · ${booking.payment_status === 'paid' ? 'Paid' : booking.payment_status === 'refunded' ? 'Refunded' : 'Payment arranged with staff'}`;
+        const info = document.createElement('p'); info.textContent = `${money(booking.total_price_cents)} · ${booking.payment_method === 'square' ? 'Square' : booking.payment_method === 'venmo' ? 'Venmo' : booking.payment_method === 'cash' ? 'Cash' : 'Other payment'} · ${booking.payment_status === 'paid' ? 'Paid' : booking.payment_status === 'refunded' ? 'Refunded' : 'Unpaid'}`;
         const note = document.createElement('p'); note.className = 'customer-booking-note';
         note.textContent = booking.status === 'pending' ? 'Your time is held. Staff approval is still required.' : booking.status === 'confirmed' ? 'Your booking is approved. We’ll see you at the fieldhouse.' : 'This booking was cancelled and its time released.';
         const participants = document.createElement('p'); participants.className = 'customer-booking-participants';
@@ -61,6 +78,11 @@
             finally { cancelling = false; cancel.disabled = false; }
           });
           const actions = document.createElement('div'); actions.className = 'customer-booking-actions';
+          if (squareEnabled && booking.payment_status === 'unpaid') {
+            const pay = document.createElement('button'); pay.type = 'button'; pay.className = 'button'; pay.textContent = 'Pay with Square';
+            pay.addEventListener('click', () => window.fieldhouseSquare.open([booking.id], () => loadBookings()));
+            actions.append(pay);
+          }
           actions.append(cancel); footer.append(actions); body.append(feedback);
         }
         return card;

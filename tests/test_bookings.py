@@ -60,7 +60,7 @@ class BookingAPITests(unittest.TestCase):
 
     def test_invalid_data_never_reaches_database(self):
         for change in [dict(starts_at='2026-10-15T10:00:00'), dict(service='half-field'),
-                       dict(payment_method='square'), dict(party_size=0), dict(party_size=1.2),
+                       dict(payment_method='invalid'), dict(party_size=0), dict(party_size=1.2),
                        dict(email='bad'), dict(phone_number='abcdefghi'), dict(total_price_cents=1),
                        dict(extra_pizzas=21)]:
             response = self.client.post('/api/bookings', json=self.payload | change)
@@ -87,6 +87,49 @@ class BookingAPITests(unittest.TestCase):
         response = self.client.post(f'/api/bookings/staff/{uuid4()}', json={'action': 'approve'}, headers={'X-Fieldhouse-Request': '1'})
         self.assertEqual(response.status_code, 200)
         self.assertEqual(self.db.rpc.call_args.args[0], 'review_booking')
+
+    def test_manual_payment_is_atomic_and_limited_to_unpaid_manual_bookings(self):
+        query = Mock()
+        query.eq.return_value = query
+        query.in_.return_value = query
+        self.db.table.return_value.update.return_value = query
+        query.execute.return_value.data = [{'status':'confirmed','payment_status':'paid'}]
+        for action in ('approve_paid', 'mark_paid'):
+            with self.subTest(action=action):
+                query.reset_mock()
+                booking_id = str(uuid4())
+                response = self.client.post(f'/api/bookings/staff/{booking_id}', json={'action':action})
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual(response.json(), {'status':'confirmed','payment_status':'paid'})
+                expected = {'payment_status':'paid'}
+                if action == 'approve_paid': expected['status'] = 'confirmed'
+                self.db.table.return_value.update.assert_called_with(expected)
+                query.eq.assert_any_call('id', booking_id)
+                query.eq.assert_any_call('status', 'pending' if action == 'approve_paid' else 'confirmed')
+                query.eq.assert_any_call('payment_status', 'unpaid')
+                query.in_.assert_called_once_with('payment_method', ['venmo','cash','other'])
+        self.db.rpc.assert_not_called()
+
+    def test_manual_payment_rejects_stale_state_and_processing_square_payment(self):
+        query = Mock()
+        query.eq.return_value = query
+        query.in_.return_value = query
+        self.db.table.return_value.update.return_value = query
+        query.execute.return_value.data = []
+        path = f'/api/bookings/staff/{uuid4()}'
+        self.assertEqual(self.client.post(path,json={'action':'mark_paid'}).status_code,409)
+        query.execute.side_effect = APIError({'code':'P0001','message':'private','details':'','hint':''})
+        response = self.client.post(path,json={'action':'approve_paid'})
+        self.assertEqual(response.status_code,409)
+        self.assertIn('Square payment is processing',response.json()['detail'])
+        self.assertNotIn('private',response.text)
+
+    def test_customer_cannot_record_manual_payment(self):
+        self.auth.auth.get_user.return_value.user.app_metadata = {}
+        for action in ('mark_paid','approve_paid'):
+            self.assertEqual(self.client.post(f'/api/bookings/staff/{uuid4()}',json={'action':action}).status_code,403)
+        self.db.table.assert_not_called()
+        self.db.rpc.assert_not_called()
 
     def test_my_bookings_uses_session_owner_and_no_cache(self):
         self.db.rpc.return_value.execute.return_value = SimpleNamespace(data={'bookings':[], 'has_more':False})
