@@ -19,20 +19,31 @@
       if (response.status === 401) { sessionExpired(); return; }
       const data = await response.json();
       if (!response.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Could not load your bookings.');
+      const expanded = new Set([...$('my-bookings-list').querySelectorAll('details[open]')].map(card => card.dataset.bookingId));
       const cards = data.bookings.map(booking => {
-        const card = document.createElement('article'); card.className = 'customer-booking';
-        const top = document.createElement('div'); top.className = 'customer-section-heading';
-        const title = document.createElement('h3'); title.textContent = booking.name;
+        const card = document.createElement('details'); card.className = 'customer-booking';
+        card.dataset.bookingId = String(booking.id); card.open = expanded.has(String(booking.id));
+        const top = document.createElement('summary'); top.className = 'customer-booking-summary';
+        const title = document.createElement('span'); title.className = 'customer-booking-title'; title.textContent = booking.name;
         const status = document.createElement('span'); status.className = `booking-state booking-state-${booking.status}`;
         status.textContent = {pending:'Pending approval',confirmed:'Approved',cancelled:'Cancelled'}[booking.status] || booking.status;
-        top.append(title, status);
-        const times = document.createElement('p'); times.textContent = `${date(booking.starts_at)} – ${date(booking.ends_at)} Eastern`;
+        const start = new Date(booking.starts_at), end = new Date(booking.ends_at);
+        const dayOptions = {timeZone:'America/New_York',dateStyle:'medium'};
+        const timeOptions = {timeZone:'America/New_York',timeStyle:'short'};
+        const startDay = start.toLocaleDateString('en-US', dayOptions), endDay = end.toLocaleDateString('en-US', dayOptions);
+        const times = document.createElement('span'); times.className = 'customer-booking-time';
+        times.textContent = `${startDay} · ${start.toLocaleTimeString('en-US', timeOptions)} – ${startDay === endDay ? '' : endDay + ' · '}${end.toLocaleTimeString('en-US', timeOptions)} Eastern`;
+        top.append(title, times, status);
+        const body = document.createElement('div'); body.className = 'customer-booking-details';
         const info = document.createElement('p'); info.textContent = `${money(booking.total_price_cents)} · ${booking.payment_method === 'venmo' ? 'Venmo' : booking.payment_method === 'cash' ? 'Cash' : 'Other payment'} · ${booking.payment_status === 'paid' ? 'Paid' : booking.payment_status === 'refunded' ? 'Refunded' : 'Payment arranged with staff'}`;
         const note = document.createElement('p'); note.className = 'customer-booking-note';
         note.textContent = booking.status === 'pending' ? 'Your time is held. Staff approval is still required.' : booking.status === 'confirmed' ? 'Your booking is approved. We’ll see you at the fieldhouse.' : 'This booking was cancelled and its time released.';
         const participants = document.createElement('p'); participants.className = 'customer-booking-participants';
         participants.textContent = `${booking.party_size} ${booking.party_size === 1 ? 'participant' : 'participants'}`;
-        card.append(top,times,participants,info,note);
+        const footer = document.createElement('div'); footer.className = 'customer-booking-footer';
+        footer.append(note);
+        body.append(participants,info,footer);
+        card.append(top,body);
         if (['pending','confirmed'].includes(booking.status) && new Date(booking.starts_at) > new Date()) {
           const cancel = document.createElement('button'); cancel.type = 'button'; cancel.className = 'customer-cancel-button'; cancel.textContent = 'Cancel booking';
           const feedback = document.createElement('p'); feedback.setAttribute('role','status');
@@ -50,7 +61,7 @@
             finally { cancelling = false; cancel.disabled = false; }
           });
           const actions = document.createElement('div'); actions.className = 'customer-booking-actions';
-          actions.append(cancel); card.append(actions,feedback);
+          actions.append(cancel); footer.append(actions); body.append(feedback);
         }
         return card;
       });

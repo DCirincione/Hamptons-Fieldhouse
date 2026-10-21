@@ -47,7 +47,7 @@
       // Create the admin link only for a server-verified administrator.
       $('profile-admin').replaceChildren();
       if (user.is_admin) {
-        const link = document.createElement('a'); link.href = '/admin/bookings'; link.textContent = 'Booking Admin';
+        const link = document.createElement('a'); link.href = '/admin/bookings'; link.textContent = 'Admin';
         $('profile-admin').replaceChildren(link);
       }
       if ($('account-forms')) {

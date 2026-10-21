@@ -590,8 +590,15 @@ body.booking-modal-open { overflow: hidden; }
 .customer-booking-toolbar { display: flex; align-items: center; gap: 10px; justify-content: space-between; margin-block: 20px; }
 .customer-booking-toolbar .staff-section-nav { flex: 1; }
 .customer-booking-toolbar .staff-section-nav button { padding: 9px 12px; }
-.customer-booking { padding: 22px 0; border-top: 1px solid var(--line); }
-.customer-booking h3 { font-size: 22px; }
+.customer-booking { border-top: 1px solid var(--line); }
+.customer-booking-summary { position: relative; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 18px; padding: 15px 28px 15px 0; cursor: pointer; list-style: none; }
+.customer-booking-summary::-webkit-details-marker { display: none; }
+.customer-booking-summary::after { content: '›'; position: absolute; right: 4px; top: 50%; font-size: 24px; transform: translateY(-50%); }
+.customer-booking[open] > .customer-booking-summary::after { transform: translateY(-50%) rotate(90deg); }
+.customer-booking-summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.customer-booking-title { color: var(--navy); font-weight: 700; font-size: 16px; }
+.customer-booking-time { color: var(--muted); font-size: 13px; }
+.customer-booking-details { padding: 0 0 16px; }
 .customer-booking p { font-size: 13px; margin: 10px 0; }
 .booking-state { display: inline-block; border-radius: 100px; padding: 6px 10px; font-size: 11px; font-weight: 600; white-space: nowrap; }
 .booking-state-pending { background: #fff3d4; color: #795415; }
@@ -619,7 +626,10 @@ body.booking-modal-open { overflow: hidden; }
 .booking-payment-plan label span span { display: block; font-size: 13px; margin-top: 4px; }
 .booking-payment-plan p { font-size: 13px; }
 
-.customer-booking-actions { display: flex; justify-content: flex-end; margin-top: 18px; }
+.customer-booking-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px 16px; flex-wrap: wrap; }
+.customer-booking-footer .customer-booking-note { flex: 1 1 240px; margin: 0; }
+.customer-booking-actions { display: flex; justify-content: flex-end; margin-left: auto; }
+.customer-booking-details > p[role="status"]:empty { display: none; }
 .customer-cancel-button { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 9px 16px; border: 1px solid #e8c9cd; border-radius: 8px; background: #fff; color: #9a2839; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s, border-color .15s; }
 .customer-cancel-button:hover:not(:disabled) { background: #fff3f4; border-color: #c76c79; }
 .customer-cancel-button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }

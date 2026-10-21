@@ -64,6 +64,10 @@ with TestClient(app) as client, sync_playwright() as p:
     page.locator('#login-form [name=password]').fill('test-long-password')
     page.locator('#login-form button[type=submit]').click()
     page.locator('#account-summary').wait_for(state='visible')
+    page.locator('.customer-booking-summary').wait_for()
+    assert not page.locator('.customer-booking').evaluate('(element) => element.open')
+    assert not page.get_by_role('button',name='Cancel booking',exact=True).is_visible()
+    page.locator('.customer-booking-summary').click()
     page.get_by_text('Pending approval',exact=True).wait_for()
     state['booking_status']='confirmed'
     page.clock.fast_forward(20000)
@@ -80,6 +84,7 @@ with TestClient(app) as client, sync_playwright() as p:
     page.get_by_role('button',name='Cancel booking',exact=True).click()
     page.wait_for_function("document.querySelector('#my-bookings-status').textContent.includes('Booking cancelled')")
     page.locator('[data-booking-view=history]').click()
+    page.locator('.customer-booking-summary').click()
     page.get_by_text('Cancelled',exact=True).wait_for()
     assert page.get_by_role('button',name='Cancel booking',exact=True).count()==0
     page.locator('#profile-dropdown summary').click()
