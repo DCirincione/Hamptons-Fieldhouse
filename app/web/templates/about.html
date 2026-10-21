@@ -27,17 +27,90 @@
   <section class="facility-gallery card" aria-labelledby="gallery-title">
     <div class="gallery-heading">
       <div><p class="eyebrow">TAKE A LOOK AROUND</p><h2 id="gallery-title">Inside the Fieldhouse</h2></div>
-      <p>Room to play. Space to grow.<br>Explore the place where it all happens.</p>
+      <div class="gallery-intro">
+        <p>Room to play. Space to grow.<br>Explore the place where it all happens.</p>
+        <div class="gallery-scroll-controls" aria-label="Gallery controls">
+          <button type="button" data-carousel-prev aria-label="Scroll to previous photo">←</button>
+          <button type="button" data-carousel-next aria-label="Scroll to next photo">→</button>
+        </div>
+      </div>
     </div>
-    <div class="gallery-grid">
-      <a class="gallery-photo" href="/assets/photos/fieldhouse-turf.jpg" data-gallery-photo data-caption="Room to play" aria-label="View full-size photo of the indoor turf field">
+    <div class="gallery-carousel" aria-label="Fieldhouse photo carousel" tabindex="0">
+      {% for photo in gallery_photos %}
+      <a class="gallery-photo" href="{{ photo.image_url }}" data-gallery-photo aria-label="View gallery photo {{ loop.index }} full size">
+        <img src="{{ photo.image_url }}" loading="lazy" alt="">
+      </a>
+      {% endfor %}
+      {% if not gallery_photos %}
+      <a class="gallery-photo" href="/assets/photos/fieldhouse-turf.jpg" data-gallery-photo data-caption="Main indoor turf field" aria-label="View full-size photo of the indoor turf field">
         <img src="/assets/photos/fieldhouse-turf.jpg" width="1200" height="800" loading="lazy" alt="Indoor turf field with soccer balls, a goal, and overhead safety netting">
-        <span class="gallery-caption"><span><small>THE TURF</small><strong>Room to play</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+        <span class="gallery-caption"><span><small>INDOOR TURF</small><strong>Main field</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
       </a>
-      <a class="gallery-photo" href="/assets/photos/fieldhouse-hero.jpg" data-gallery-photo data-caption="Welcome to our house" aria-label="View full-size photo of the Fieldhouse banner and flags">
-        <img src="/assets/photos/fieldhouse-hero.jpg" srcset="/assets/photos/fieldhouse-hero-small.jpg 960w, /assets/photos/fieldhouse-hero.jpg 1920w" sizes="(max-width: 700px) 100vw, 45vw" width="1920" height="1280" loading="lazy" alt="Hamptons Fieldhouse banner between American and Brazilian flags above the goal">
-        <span class="gallery-caption"><span><small>HAMPTONS FIELDHOUSE</small><strong>Welcome to our house</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      <a class="gallery-photo" href="/assets/photos/A7V08705-HDR-web.jpg" data-gallery-photo data-caption="Hamptons Fieldhouse exterior" aria-label="View full-size exterior photo of Hamptons Fieldhouse">
+        <img src="/assets/photos/A7V08705-HDR-web.jpg" width="2200" height="1467" loading="lazy" alt="Exterior of Hamptons Fieldhouse under a blue sky">
+        <span class="gallery-caption"><span><small>EXTERIOR</small><strong>Hamptons Fieldhouse</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
       </a>
+      <a class="gallery-photo" href="/assets/photos/A7V08706-HDR-web.jpg" data-gallery-photo data-caption="Exterior Fieldhouse sign" aria-label="View full-size photo of the Hamptons Fieldhouse exterior sign">
+        <img src="/assets/photos/A7V08706-HDR-web.jpg" width="2200" height="1467" loading="lazy" alt="Hamptons Fieldhouse sign mounted above the main entrance">
+        <span class="gallery-caption"><span><small>EXTERIOR</small><strong>Fieldhouse sign</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      </a>
+      <a class="gallery-photo" href="/assets/photos/A7V08727-HDR-web.jpg" data-gallery-photo data-caption="Spectator walkway and benches" aria-label="View full-size photo of the spectator walkway">
+        <img src="/assets/photos/A7V08727-HDR-web.jpg" width="2200" height="1467" loading="lazy" alt="Spectator walkway with benches beside the netted playing areas">
+        <span class="gallery-caption"><span><small>SPECTATOR AREA</small><strong>Walkway and benches</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      </a>
+      <a class="gallery-photo" href="/assets/photos/A7V08728-HDR-web.jpg" data-gallery-photo data-caption="Refreshment and equipment area" aria-label="View full-size photo of the welcome and refreshment area">
+        <img src="/assets/photos/A7V08728-HDR-web.jpg" width="2200" height="1467" loading="lazy" alt="Welcome area with colorful practice pinnies, snacks, and drinks">
+        <span class="gallery-caption"><span><small>AMENITIES</small><strong>Refreshments and equipment</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      </a>
+      <a class="gallery-photo" href="/assets/photos/A7V08737-HDR-web.jpg" data-gallery-photo data-caption="Goal-side view of the indoor turf" aria-label="View full-size photo of an indoor turf field">
+        <img src="/assets/photos/A7V08737-HDR-web.jpg" width="2200" height="1467" loading="lazy" alt="Indoor turf field with dasher boards, goal, safety netting, and flags">
+        <span class="gallery-caption"><span><small>INDOOR TURF</small><strong>Goal-side view</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      </a>
+      <a class="gallery-photo" href="/assets/photos/A7V08743-HDR-web.jpg" data-gallery-photo data-caption="Entrance-side view of the indoor turf" aria-label="View full-size photo looking across the indoor turf">
+        <img src="/assets/photos/A7V08743-HDR-web.jpg" width="2200" height="1467" loading="lazy" alt="Wide view across the indoor turf toward a soccer goal and entrance">
+        <span class="gallery-caption"><span><small>INDOOR TURF</small><strong>Entrance-side view</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      </a>
+      <a class="gallery-photo" href="/assets/photos/A7V08748-HDR-web.jpg" data-gallery-photo data-caption="Sideline spectator seating" aria-label="View full-size photo of spectator seating beside the turf">
+        <img src="/assets/photos/A7V08748-HDR-web.jpg" width="2200" height="1467" loading="lazy" alt="Rows of spectator seats along the netted edge of the indoor field">
+        <span class="gallery-caption"><span><small>SPECTATOR AREA</small><strong>Sideline seating</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      </a>
+      <a class="gallery-photo" href="/assets/photos/A7V08753-HDR-web.jpg" data-gallery-photo data-caption="Flexible seating beside the training area" aria-label="View full-size photo of event seating and a training area">
+        <img src="/assets/photos/A7V08753-HDR-web.jpg" width="2200" height="1467" loading="lazy" alt="Folding chairs beside netted turf and a small training goal">
+        <span class="gallery-caption"><span><small>EVENT SPACE</small><strong>Flexible seating area</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      </a>
+      <a class="gallery-photo" href="/assets/photos/A7V08758-HDR-web.jpg" data-gallery-photo data-caption="Birthday party area" aria-label="View full-size photo of the birthday party area">
+        <img src="/assets/photos/A7V08758-HDR-web.jpg" width="2200" height="1467" loading="lazy" alt="Open party area beside the field with a birthday banner and television">
+        <span class="gallery-caption"><span><small>EVENT SPACE</small><strong>Birthday party area</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      </a>
+      <a class="gallery-photo" href="/assets/photos/A7V08772-HDR-web.jpg" data-gallery-photo data-caption="Multi-use training lane" aria-label="View full-size photo of an indoor batting and training lane">
+        <img src="/assets/photos/A7V08772-HDR-web.jpg" width="2200" height="1467" loading="lazy" alt="Netted indoor batting and training lane with turf and a portable goal">
+        <span class="gallery-caption"><span><small>TRAINING AREA</small><strong>Multi-use training lane</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      </a>
+      <a class="gallery-photo" href="/assets/photos/A7V08773-HDR-web.jpg" data-gallery-photo data-caption="Batting cage with protective screen" aria-label="View full-size photo looking down a batting lane">
+        <img src="/assets/photos/A7V08773-HDR-web.jpg" width="2200" height="1467" loading="lazy" alt="Long netted batting lane with artificial turf and a protective screen">
+        <span class="gallery-caption"><span><small>BATTING CAGES</small><strong>Batting cage</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      </a>
+      <a class="gallery-photo" href="/assets/photos/A7V08783-HDR-web.jpg" data-gallery-photo data-caption="Second batting and training cage" aria-label="View full-size photo of a second netted training lane">
+        <img src="/assets/photos/A7V08783-HDR-web.jpg" width="2200" height="1467" loading="lazy" alt="Netted turf training lane with a protective screen and goal">
+        <span class="gallery-caption"><span><small>BATTING CAGES</small><strong>Training cage</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      </a>
+      <a class="gallery-photo" href="/assets/photos/A7V08795-HDR-web.jpg" data-gallery-photo data-caption="Field-side entrance and seating" aria-label="View full-size photo of the entrance beside the field">
+        <img src="/assets/photos/A7V08795-HDR-web.jpg" width="2200" height="1467" loading="lazy" alt="Facility entrance and seating area beside the netted turf field">
+        <span class="gallery-caption"><span><small>ENTRANCE</small><strong>Field-side entrance</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      </a>
+      <a class="gallery-photo" href="/assets/photos/A7V08796-HDR-web.jpg" data-gallery-photo data-caption="Main entrance doors" aria-label="View full-size photo from the facility entrance">
+        <img src="/assets/photos/A7V08796-HDR-web.jpg" width="2200" height="1467" loading="lazy" alt="Glass entrance doors opening into the Fieldhouse beside the turf">
+        <span class="gallery-caption"><span><small>ENTRANCE</small><strong>Main doors</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      </a>
+      <a class="gallery-photo" href="/assets/photos/A7V08802-HDR-web.jpg" data-gallery-photo data-caption="Full field viewed from midfield" aria-label="View full-size panoramic photo of the indoor field">
+        <img src="/assets/photos/A7V08802-HDR-web.jpg" width="2200" height="1467" loading="lazy" alt="Full-length view of the indoor turf field under bright overhead lights">
+        <span class="gallery-caption"><span><small>INDOOR TURF</small><strong>Full-field view</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      </a>
+      <a class="gallery-photo" href="/assets/photos/A7V08819-HDR-web.jpg" data-gallery-photo data-caption="Full field viewed toward the entrance" aria-label="View full-size reverse view of the indoor field">
+        <img src="/assets/photos/A7V08819-HDR-web.jpg" width="2200" height="1467" loading="lazy" alt="Indoor turf field viewed from the opposite goal line toward the entrance">
+        <span class="gallery-caption"><span><small>INDOOR TURF</small><strong>Reverse field view</strong></span><span class="gallery-expand" aria-hidden="true">↗</span></span>
+      </a>
+      {% endif %}
     </div>
   </section>
 </div>
@@ -50,5 +123,5 @@
     <button type="button" data-gallery-next aria-label="Next photo">→</button>
   </div>
 </dialog>
-<script src="/assets/facility-gallery.js?v=1" defer></script>
+<script src="/assets/facility-gallery.js?v=2" defer></script>
 {% endblock %}

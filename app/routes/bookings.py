@@ -139,14 +139,30 @@ class Review(BaseModel):
 
 
 @router.get("/staff", dependencies=[Depends(require_staff)])
-def staff_bookings(response: Response, db: Client = Depends(get_booking_db)):
+def staff_bookings(response: Response, month: date | None = None, db: Client = Depends(get_booking_db)):
     response.headers["Cache-Control"] = "no-store"
     try:
-        bookings = db.table("bookings").select(
+        query = db.table("bookings").select(
             "id,first_name,last_name,email,phone_number,starts_at,ends_at,party_size,notes,"
             "status,customer_request_id,total_price_cents,payment_method,payment_status,own_food,created_at,request_payload,"
             "offerings(name),booking_line_items(quantity,booking_extras(name))"
-        ).in_("status", ["pending", "confirmed"]).order("starts_at").limit(500).execute().data
+        ).in_("status", ["pending", "confirmed"]).order("starts_at").order("id")
+        if month:
+            first = month.replace(day=1)
+            following = (first + timedelta(days=32)).replace(day=1)
+            ny = ZoneInfo("America/New_York")
+            query = query.gte("starts_at", datetime(first.year, first.month, 1, tzinfo=ny).isoformat()).lt(
+                "starts_at", datetime(following.year, following.month, 1, tzinfo=ny).isoformat())
+            bookings = []
+            offset = 0
+            while True:
+                rows = query.range(offset, offset + 499).execute().data
+                bookings.extend(rows)
+                if len(rows) < 500:
+                    break
+                offset += 500
+        else:
+            bookings = query.limit(500).execute().data
         for booking in bookings:
             saved = booking.pop("request_payload", None) or {}
             booking["payment_plan"] = saved.get("payment_plan")

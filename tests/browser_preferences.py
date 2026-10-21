@@ -1,4 +1,4 @@
-"""Privacy notice, accessible preferences, and opt-in map browser checks."""
+"""Privacy notice, accessible preferences, and automatically loaded map browser checks."""
 from urllib.parse import urlparse
 from fastapi.testclient import TestClient
 from playwright.sync_api import sync_playwright
@@ -41,9 +41,27 @@ with TestClient(app) as client, sync_playwright() as p:
     assert page.locator('html').evaluate('(el) => el.classList.length') == 0
     page.keyboard.press('Escape')
     page.goto('http://fieldhouse.test/contact')
-    assert page.locator('[data-map-src]').get_attribute('src') is None
-    page.locator('#load-map').click()
-    assert page.locator('[data-map-src]').get_attribute('src').startswith('https://www.google.com/maps')
+    assert page.locator('.location-map iframe').is_visible()
+    assert page.locator('.location-map iframe').get_attribute('src').startswith('https://www.google.com/maps')
+    assert page.locator('#load-map').count() == 0
+    page.goto('http://fieldhouse.test/about')
+    assert page.locator('[data-gallery-photo]').count() == 17
+    cards = page.locator('[data-gallery-photo]')
+    first_box = cards.nth(0).bounding_box()
+    second_box = cards.nth(1).bounding_box()
+    assert first_box['width'] == second_box['width']
+    assert first_box['height'] == second_box['height']
+    assert second_box['x'] > first_box['x']
+    carousel = page.locator('.gallery-carousel')
+    assert carousel.evaluate('(el) => el.scrollWidth > el.clientWidth')
+    page.locator('[data-carousel-next]').click()
+    page.wait_for_timeout(500)
+    assert carousel.evaluate('(el) => el.scrollLeft > 0')
+    page.locator('[data-gallery-photo]').first.click()
+    assert page.locator('.gallery-viewer').is_visible()
+    page.locator('[data-gallery-next]').click()
+    assert '2 / 17' in page.locator('.gallery-viewer-caption').inner_text()
+    page.keyboard.press('Escape')
     for path in ['/privacy', '/accessibility', '/contact', '/']:
         page.set_viewport_size({'width': 375, 'height': 667})
         page.goto('http://fieldhouse.test' + path)

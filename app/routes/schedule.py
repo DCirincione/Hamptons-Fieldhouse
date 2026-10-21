@@ -1,5 +1,7 @@
 """Staff-managed closures and repeat-customer time blocks."""
-from datetime import date, datetime, time, timedelta
+import csv
+
+from datetime import date, datetime, time, timedelta, timezone
 from typing import Literal
 from uuid import UUID
 from zoneinfo import ZoneInfo
@@ -7,6 +9,8 @@ from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from supabase import Client
+from httpx import HTTPError
+from postgrest.exceptions import APIError
 
 from app.routes.bookings import get_booking_db, require_staff, rpc
 
@@ -25,8 +29,8 @@ class TimeBlock(BaseModel):
     def valid_hours(self):
         if self.start.tzinfo or self.end.tzinfo or self.start.second or self.end.second or self.start.microsecond or self.end.microsecond:
             raise ValueError("Use local Eastern times in whole minutes.")
-        if not time(6) <= self.start < self.end <= time(23):
-            raise ValueError("Blocks must start and end between 6 AM and 11 PM on the same day.")
+        if not self.start < self.end:
+            raise ValueError("End time must be after start time on the same day.")
         return self
 
 
@@ -69,6 +73,10 @@ class ScheduleBlock(BaseModel):
         for block in blocks:
             if not today <= block.date <= today + timedelta(days=365):
                 raise ValueError("Choose dates within the next year.")
+            for value in (block.start, block.end):
+                local = datetime.combine(block.date, value, NY)
+                if local.astimezone(timezone.utc).astimezone(NY).replace(tzinfo=None) != local.replace(tzinfo=None):
+                    raise ValueError("That local time does not exist because the clocks change. Choose another time.")
             result.append({"starts_at": datetime.combine(block.date, block.start, NY).isoformat(),
                            "ends_at": datetime.combine(block.date, block.end, NY).isoformat()})
         # Reject duplicates/overlapping rows before submitting the entire batch.
@@ -81,7 +89,35 @@ class ScheduleBlock(BaseModel):
 @router.get("")
 def schedule(month: date, response: Response, db: Client = Depends(get_booking_db)):
     response.headers["Cache-Control"] = "no-store"
-    return rpc(db, "staff_schedule", {"p_month": month.replace(day=1).isoformat()})
+    first = month.replace(day=1)
+    following = (first + timedelta(days=32)).replace(day=1)
+    start = datetime.combine(first, time.min, NY).isoformat()
+    end = datetime.combine(following, time.min, NY).isoformat()
+    result = []
+    try:
+        # Read existing slots directly: older installations may not have the
+        # staff_schedule RPC or the optional series_id column yet.
+        offset = 0
+        while True:
+            rows = db.table("booking_resource_slots").select(
+                "*,bookings(status,first_name,last_name,offerings(name))"
+            ).filter("during", "ov", f'["{start}","{end}")').order("id").range(offset, offset + 499).execute().data
+            for row in rows:
+                starts_at, ends_at = next(csv.reader([row["during"][1:-1]]))
+                booking = row.get("bookings") or {}
+                offering = booking.get("offerings") or {}
+                title = (f"{offering.get('name', 'Booking')} — {booking.get('first_name', '')} {booking.get('last_name', '')}".strip()
+                         if row.get("booking_id") else row.get("note", "Blocked time"))
+                result.append({"id": row["id"], "resource": row["resource"],
+                               "starts_at": starts_at, "ends_at": ends_at,
+                               "series_id": row.get("series_id"), "booking_id": row.get("booking_id"),
+                               "title": title, "status": booking.get("status", "blocked")})
+            if len(rows) < 500:
+                break
+            offset += 500
+        return sorted(result, key=lambda row: (row["starts_at"], row["resource"]))
+    except (APIError, HTTPError, ValueError, KeyError, csv.Error):
+        raise HTTPException(503, "Could not load reserved times. Refresh the calendar to retry. Opening hours can still be edited.") from None
 
 
 @router.post("", status_code=201)
@@ -110,3 +146,66 @@ class RemoveBlock(BaseModel):
 @router.post("/remove")
 def remove_blocks(data: RemoveBlock, db: Client = Depends(get_booking_db)):
     return rpc(db, "remove_schedule_block", {"p_id": str(data.slot_id), "p_series": data.scope == "series"})
+
+
+class OpeningHours(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    opens: time | None = None
+    closes: time | None = None
+
+    @model_validator(mode="after")
+    def valid_interval(self):
+        if self.opens is None and self.closes is None:
+            return self
+        if self.opens is None or self.closes is None:
+            raise ValueError("Choose opening and closing times on the same day, or mark the day closed.")
+        if any(t.tzinfo or t.second or t.microsecond for t in (self.opens, self.closes)):
+            raise ValueError("Use Eastern times in whole minutes.")
+        if self.opens >= self.closes:
+            raise ValueError("Closing time must be after opening time on the same day.")
+        return self
+
+
+class WeeklyHours(OpeningHours):
+    weekday: int = Field(ge=0, le=6, strict=True)
+
+
+class HoursUpdate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    days: list[WeeklyHours] = Field(min_length=7, max_length=7)
+
+    @model_validator(mode="after")
+    def unique_days(self):
+        if {day.weekday for day in self.days} != set(range(7)):
+            raise ValueError("Include each weekday exactly once.")
+        return self
+
+
+class DateHours(OpeningHours):
+    date: date
+    reset: bool = False
+
+    @model_validator(mode="after")
+    def valid_date(self):
+        today = datetime.now(NY).date()
+        if not today <= self.date <= today + timedelta(days=365):
+            raise ValueError("Choose a date within the next year.")
+        if self.reset and (self.opens is not None or self.closes is not None):
+            raise ValueError("Reset uses the regular weekly hours; omit custom times.")
+        return self
+
+
+@router.get("/hours")
+def opening_hours(response: Response, db: Client = Depends(get_booking_db)):
+    response.headers["Cache-Control"] = "no-store"
+    return rpc(db, "staff_opening_hours", {})
+
+
+@router.put("/hours")
+def update_opening_hours(data: HoursUpdate, db: Client = Depends(get_booking_db)):
+    return rpc(db, "set_weekly_opening_hours", {"p_days": data.model_dump(mode="json")["days"]})
+
+
+@router.put("/hours/date")
+def update_date_hours(data: DateHours, db: Client = Depends(get_booking_db)):
+    return rpc(db, "set_date_opening_hours", {"p_day": data.model_dump(mode="json")})

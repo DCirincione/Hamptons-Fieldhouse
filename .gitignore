@@ -2,6 +2,8 @@
 __pycache__/
 *.py[cod]
 .env
+app/web/assets/photos/*-HDR.jpg
+supabase/
 .env.*
 !.env.example
 .vercel/

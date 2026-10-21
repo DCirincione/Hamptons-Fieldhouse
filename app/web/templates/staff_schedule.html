@@ -1,19 +1,50 @@
 <div id="staff-schedule" hidden>
 <section class="card" aria-labelledby="staff-schedule-title">
-  <h2 id="staff-schedule-title">Daily Schedule</h2>
-  <p>Every day is open from 6 AM–11 PM. Block time below for regular customers, phone bookings, or closures. All times are Eastern.</p>
+  <h2 id="staff-schedule-title">Calendar &amp; bookings</h2>
+  <p>Choose a date to review bookings, confirm appointments, or block time. All times are Eastern.</p>
   <div class="booking-fields">
     <label>View date<input type="date" id="schedule-date" required></label>
-    <label>View space<select id="schedule-resource"><option value="field">Full field</option><option value="backspace">Speed &amp; agility + batting cage</option><option value="party-area">Party area</option></select></label>
+    <label>Manual blocks for<select id="schedule-resource"><option value="all">All spaces</option><option value="field">Full field</option><option value="backspace">Speed &amp; agility + batting cage</option><option value="party-area">Party area</option></select></label>
+  </div>
+  <div class="staff-calendar-layout">
+    <div class="staff-month-calendar">
+      <div class="calendar-navigation"><button type="button" id="schedule-previous" aria-label="Previous month">←</button><h3 id="schedule-month"></h3><button type="button" id="schedule-next" aria-label="Next month">→</button></div>
+      <div class="calendar-weekdays" aria-hidden="true"><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span></div>
+      <div class="calendar-days" id="schedule-calendar" aria-label="Choose a date to manage"></div>
+      <div class="calendar-legend"><span><span class="calendar-pending" aria-hidden="true">!</span> Awaiting confirmation</span><span><span class="calendar-confirmed" aria-hidden="true">✓</span> Booked</span></div>
+      <p class="calendar-help">Indicators include all spaces. Select a date to review its bookings.</p>
+      <p id="calendar-booking-status" role="status"></p>
+    </div>
+    <div>
+      <h3 id="schedule-day-title"></h3>
+      <p id="schedule-hours-summary"></p>
+      <button type="button" class="button" id="block-custom">Block time</button>
+      <section id="staff-reservations" aria-label="Bookings for this date">
+        <p id="day-bookings-status" role="status"></p>
+        <div id="staff-bookings"></div>
+        <div id="schedule-entries"></div>
+      </section>
+      <details id="date-hours-panel" class="staff-date-hours">
+        <summary>Change hours for this date</summary>
+        <form id="date-hours-form">
+          <fieldset id="date-hours-fields" disabled>
+            <label class="booking-checkbox"><input type="checkbox" id="date-hours-closed"> Closed all day</label>
+            <div class="booking-fields"><label>Opens<input type="time" id="date-hours-opens" required></label><label>Closes<input type="time" id="date-hours-closes" required></label></div>
+            <div class="staff-actions"><button class="button" type="submit">Save date hours</button><button type="button" id="date-hours-reset" class="text-link">Use weekly hours</button></div>
+          </fieldset>
+          <p id="date-hours-status" role="status"></p>
+        </form>
+      </details>
+    </div>
   </div>
   <button type="button" class="text-link" id="schedule-refresh">Refresh schedule</button>
   <p id="schedule-status" role="status"></p>
-  <div id="schedule-day" class="schedule-day"></div>
-  <h3>Appointments and blocks for this day</h3><div id="schedule-entries"></div>
+
 </section>
-<section class="card staff-block-card" aria-labelledby="block-title">
+<dialog class="card staff-block-card" id="block-dialog" aria-labelledby="block-title">
+  <button type="button" class="dialog-close" id="block-close" aria-label="Close block time">×</button>
   <h2 id="block-title">Block Time</h2>
-  <p>Reserve time for a customer, recurring appointment, or closure.</p>
+  <p>Reserve time for a customer, recurring appointment, or closure. Choose dates and times below.</p>
   <form id="block-form">
     <fieldset id="block-fields" aria-labelledby="block-title">
       <label>Customer or reason (staff only)<input name="title" required maxlength="200" placeholder="e.g. Tuesday soccer team"></label>
@@ -27,8 +58,8 @@
       <div id="block-repeat" hidden>
         <div class="booking-fields">
           <label>First date<input type="date" id="block-first"></label><label>Last date (inclusive)<input type="date" id="block-last"></label>
-          <label>Start time<input type="time" id="block-start" min="06:00" max="22:59" value="18:00"></label>
-          <label>End time<input type="time" id="block-end" min="06:01" max="23:00" value="19:00"></label>
+          <label>Start time<input type="time" id="block-start"  value="18:00"></label>
+          <label>End time<input type="time" id="block-end"  value="19:00"></label>
         </div>
         <fieldset id="block-weekdays" class="schedule-spaces" hidden><legend>Repeat every</legend>
           {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}<label><input type="checkbox" name="weekday" value="{{ loop.index0 }}"> {{ day }}</label>{% endfor %}
@@ -40,5 +71,34 @@
     </fieldset>
   </form>
   <p id="block-status" role="status"></p>
+</dialog>
+<section class="card staff-hours-card" aria-labelledby="weekly-hours-title">
+  <h2 id="weekly-hours-title">Weekly opening hours</h2>
+  <p>Most days the same? Apply one set of hours to every day, then save. Open a weekday below to customize it. Date overrides take priority; existing bookings are kept.</p>
+  <form id="weekly-hours-form" novalidate>
+    <fieldset id="weekly-hours-fields" disabled>
+      <label class="booking-checkbox"><input type="checkbox" id="hours-all-closed"> Closed every day</label>
+      <div class="hours-bulk booking-fields">
+        <label>Opens<input type="time" id="hours-all-opens" value="06:00" required></label>
+        <label>Closes<input type="time" id="hours-all-closes" value="23:00" required></label>
+        <button type="button" id="hours-apply-all" class="button">Apply to all days</button>
+      </div>
+      <div id="weekly-hours-rows">
+        {% for day in ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] %}
+        <details class="hours-weekday" data-weekday="{{ loop.index0 }}" data-day-name="{{ day }}">
+          <summary><strong>{{ day }}</strong><span data-hours-summary>Loading…</span><span class="hours-customize">Customize</span></summary>
+          <div class="hours-day-row">
+          <label class="booking-checkbox"><input type="checkbox" data-hours-closed> Closed</label>
+          <label>Opens<input type="time" data-hours-opens required aria-label="{{ day }} opening time"></label>
+          <label>Closes<input type="time" data-hours-closes required aria-label="{{ day }} closing time"></label>
+          </div>
+        </details>
+        {% endfor %}
+      </div>
+      <button type="submit" class="button">Save weekly hours</button>
+    </fieldset>
+    <p id="hours-status" role="status"></p>
+    <button type="button" class="text-link" id="hours-retry" hidden>Retry loading hours</button>
+  </form>
 </section>
 </div>

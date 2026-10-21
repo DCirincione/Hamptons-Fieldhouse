@@ -6,8 +6,8 @@
   <p>Manage your schedule and review customer bookings.</p></header>
   <div id="staff-controls" class="staff-toolbar" hidden>
     <nav class="staff-section-nav" aria-label="Admin sections">
-      <button type="button" id="availability-tab" aria-controls="staff-schedule" aria-pressed="false">Manage Availability</button>
-      <button type="button" id="reservations-tab" aria-controls="staff-reservations" aria-pressed="true">Booking Requests &amp; Reservations</button>
+      <button type="button" id="availability-tab" aria-controls="staff-schedule" aria-pressed="true">Calendar &amp; Bookings</button>
+      <button type="button" id="gallery-tab" aria-controls="staff-gallery" aria-pressed="false">Photo Gallery</button>
     </nav>
     <div class="staff-utilities" aria-label="Workspace actions">
       <button class="staff-utility" id="staff-refresh" type="button"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7a7 7 0 0 1 11.6-1L20 9M4 15l2.3 3A7 7 0 0 0 17.9 17"/></svg><span>Refresh</span></button>
@@ -17,12 +17,24 @@
   </div>
   <p id="staff-status" role="status"></p>
   {% include "staff_schedule.html" %}
-  <section id="staff-reservations" hidden aria-labelledby="staff-reservations-title">
-    <h2 id="staff-reservations-title">Booking Requests &amp; Reservations</h2>
-    <p class="staff-section-description">Review pending requests and keep track of approved bookings.</p>
-    <details class="staff-guidelines"><summary>Booking review guidelines</summary><p>Pending requests hold their time until approved or cancelled. Confirm payment arrangements before approving, then contact the customer with the outcome. Approval does not mark payment as collected; automated messages are not enabled.</p><p>Up to 500 active bookings, with pending requests shown first.</p></details>
-    <div id="staff-bookings"></div>
+  <section id="staff-gallery" hidden aria-labelledby="staff-gallery-title">
+    <h2 id="staff-gallery-title">About Us Photo Gallery</h2>
+    <p class="staff-section-description">Add, reorder, or remove photos shown in the About Us carousel.</p>
+    <details id="gallery-upload-panel" class="card gallery-admin-upload">
+      <summary><span>Add a photo</span><span class="gallery-upload-chevron" aria-hidden="true">⌄</span></summary>
+      <form id="gallery-upload-form">
+        <div class="gallery-admin-fields">
+          <label>Photo<input id="gallery-file" name="photo" type="file" accept="image/jpeg,image/png,image/webp" required></label>
+        </div>
+        <p class="staff-section-description">The photo will be resized to a web-friendly JPEG before upload.</p>
+        <button class="button" type="submit">Add to gallery</button>
+        <p id="gallery-upload-status" role="status"></p>
+      </form>
+    </details>
+    <div id="gallery-admin-list" class="gallery-admin-list"></div>
+    <p id="gallery-admin-status" role="status"></p>
   </section>
 </div>
-<script src="/assets/booking-staff.js?v=4" defer></script>
+<script src="/assets/booking-staff.js?v=8" defer></script>
+<script src="/assets/gallery-admin.js?v=3" defer></script>
 {% endblock %}

@@ -76,12 +76,9 @@ and [Supabase Python client](https://supabase.com/docs/reference/python/initiali
 ## Contact form
 
 `/contact` posts First Name, Last Name, Phone Number, Email, and Message to
-`/api/contact-messages`. Run `supabase/migrations/202609260002_contact_messages.sql`
-in your Supabase SQL Editor to create the `contact_messages` table and its
-insert-only public policy. Your existing `SUPABASE_URL` and publishable
+`/api/contact-messages`. Your existing `SUPABASE_URL` and publishable
 `SUPABASE_KEY` are used server-side. Messages can be viewed in the Supabase dashboard;
 public users cannot read them. The form reports success only after storage succeeds.
-The migration has not been applied automatically; database tests use a mock client.
 
 ### Shared content cards
 
@@ -105,13 +102,20 @@ Staff can also block individual dates, daily repeats, or selected weekdays for
 regular customers, and release one occurrence or a whole series. Square and
 automated email/SMS notifications are not integrated yet.
 
-Apply the six booking migrations in order, configure the server-only
-`SUPABASE_SERVICE_ROLE_KEY` and `SITE_URL`, and activate
-`booking_policy.enabled` after reviewing rates and scheduling settings. Booking
-fails closed until configured; the JSON catalog fallback does not invent available
-times. See [booking setup and tests](docs/bookings.md) for instructions.
+Configure the server-only `SUPABASE_SERVICE_ROLE_KEY` and `SITE_URL` after the
+database has been provisioned outside this repository. Booking fails closed until
+configured; the JSON catalog fallback does not invent available times. See
+[booking setup and tests](docs/bookings.md) for application configuration.
 
 Customer accounts at `/account` include a name/phone profile, upcoming and past
 bookings, and approval status updates every 20 seconds while visible. Booking
 requires a confirmed account and supports cash/Venmo plus selected-date repeat
-requests. Apply `202610130001_customer_portal.sql` before using this update.
+requests.
+
+## Admin photo gallery
+
+The Photo Gallery tab in `/admin/bookings` lets administrators add and remove About
+Us carousel images and edit their section labels, captions, and accessible image
+descriptions. The required gallery table and `gallery-images` storage bucket are
+managed outside this repository. Uploads are resized in the browser and are limited
+to JPEG, PNG, or WebP.

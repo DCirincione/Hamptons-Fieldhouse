@@ -1,6 +1,6 @@
 <dialog class="card booking-calendar" id="booking-calendar" aria-labelledby="calendar-title">
   <button type="button" class="dialog-close" id="close-booking-calendar" aria-label="Close booking calendar" autofocus>×</button>
-  <div class="rental-section-heading"><div><p class="eyebrow">MAKE TIME TO PLAY</p><h2 id="calendar-title">Find your time</h2><p>Choose a service and an available time. All times are Eastern.</p></div><span class="rental-hours">Daily · 6 AM–11 PM</span></div>
+  <div class="rental-section-heading"><div><p class="eyebrow">MAKE TIME TO PLAY</p><h2 id="calendar-title">Find your time</h2><p>Choose a service and an available time. All times are Eastern.</p></div><span class="rental-hours">See calendar for hours</span></div>
   <label for="booking-service">What would you like to book?</label>
   <select id="booking-service">
     {% for item in rentals + packages %}<option value="{{ item.slug }}">{{ item.name }}</option>{% endfor %}
@@ -25,6 +25,7 @@
     <fieldset id="reservation-fields">
       <legend>Your booking details</legend>
       <p id="selected-booking"></p>
+      {% include "participant_waiver.html" %}
       <div class="booking-fields">
         <label>First name<input name="first_name" autocomplete="given-name" required maxlength="100"></label>
         <label>Last name<input name="last_name" autocomplete="family-name" required maxlength="100"></label>

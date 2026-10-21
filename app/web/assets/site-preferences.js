@@ -46,15 +46,4 @@
     const saved = save(preferencesKey, '{}');
     document.getElementById('preference-status').textContent = saved ? 'Settings reset. Your device’s reduced-motion preference still applies.' : 'Settings reset for this page. This browser could not save the change.';
   });
-  const mapButton = document.getElementById('load-map');
-  if (mapButton) {
-    mapButton.hidden = false;
-    mapButton.addEventListener('click', () => {
-      const map = document.querySelector('[data-map-src]');
-      map.src = map.dataset.mapSrc;
-      map.hidden = false;
-      document.getElementById('map-placeholder').hidden = true;
-      map.focus();
-    });
-  }
 })();

@@ -1,5 +1,7 @@
+-- Repairs the older manual-block setup on installations that only received the hours update.
+-- Safe to rerun; existing bookings, hours, and blocks are preserved.
 begin;
-create table public.booking_block_series (
+create table if not exists public.booking_block_series (
     id uuid primary key,
     title text not null check (length(trim(title)) between 1 and 200),
     request_payload jsonb not null,
@@ -7,10 +9,10 @@ create table public.booking_block_series (
 );
 alter table public.booking_block_series enable row level security;
 revoke all on public.booking_block_series from anon, authenticated;
-alter table public.booking_resource_slots add column series_id uuid references public.booking_block_series(id);
-create index booking_resource_slots_series_idx on public.booking_resource_slots(series_id);
+alter table public.booking_resource_slots add column if not exists series_id uuid references public.booking_block_series(id);
+create index if not exists booking_resource_slots_series_idx on public.booking_resource_slots(series_id);
 
-create function public.add_schedule_blocks(p_request jsonb)
+create or replace function public.add_schedule_blocks(p_request jsonb)
 returns jsonb language plpgsql security definer set search_path = '' as $$
 declare
     v_id uuid := (p_request->>'request_id')::uuid;
@@ -47,8 +49,6 @@ begin
         if v_start is null or v_end is null or v_end <= v_start
            or (v_start at time zone 'America/New_York')::date <> (v_end at time zone 'America/New_York')::date
            or (v_start at time zone 'America/New_York')::date not between v_today and v_today + 365
-           or (v_start at time zone 'America/New_York')::time < time '06:00'
-           or (v_end at time zone 'America/New_York')::time > time '23:00'
            or date_trunc('minute',v_start) <> v_start or date_trunc('minute',v_end) <> v_end then
             raise exception 'Invalid time range' using errcode = '22023';
         end if;
@@ -61,26 +61,8 @@ begin
 end;
 $$;
 
-create function public.staff_schedule(p_month date)
-returns jsonb language plpgsql stable security definer set search_path = '' as $$
-begin
-    if p_month is null or p_month <> date_trunc('month',p_month)::date then
-        raise exception 'Invalid month' using errcode = '22023';
-    end if;
-    return coalesce((select jsonb_agg(jsonb_build_object(
-        'id',s.id,'resource',s.resource,'starts_at',lower(s.during),'ends_at',upper(s.during),
-        'series_id',s.series_id,'booking_id',s.booking_id,
-        'title',case when s.booking_id is null then s.note else o.name || ' — ' || b.first_name || ' ' || b.last_name end,
-        'status',coalesce(b.status,'blocked')) order by lower(s.during),s.resource)
-        from public.booking_resource_slots s
-        left join public.bookings b on b.id = s.booking_id
-        left join public.offerings o on o.id = b.offering_id
-        where s.during && tstzrange(p_month::timestamp at time zone 'America/New_York',
-            (p_month + interval '1 month') at time zone 'America/New_York','[)')), '[]'::jsonb);
-end;
-$$;
 
-create function public.remove_schedule_block(p_id uuid,p_series boolean default false)
+create or replace function public.remove_schedule_block(p_id uuid,p_series boolean default false)
 returns jsonb language plpgsql security definer set search_path = '' as $$
 declare v_slot public.booking_resource_slots; v_count integer;
 begin
@@ -102,8 +84,6 @@ begin
     return jsonb_build_object('removed',v_count);
 end;
 $$;
-revoke all on function public.add_schedule_blocks(jsonb), public.staff_schedule(date),
-    public.remove_schedule_block(uuid,boolean) from public,anon,authenticated;
-grant execute on function public.add_schedule_blocks(jsonb), public.staff_schedule(date),
-    public.remove_schedule_block(uuid,boolean) to service_role;
+revoke all on function public.add_schedule_blocks(jsonb), public.remove_schedule_block(uuid,boolean) from public,anon,authenticated;
+grant execute on function public.add_schedule_blocks(jsonb), public.remove_schedule_block(uuid,boolean) to service_role;
 commit;

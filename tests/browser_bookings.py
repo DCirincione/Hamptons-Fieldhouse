@@ -18,8 +18,11 @@ starts = target.isoformat()
 requests = []
 errors = []
 staff_state = 'pending'
+schedule_unavailable = False
 block_requests = []
 schedule_blocks = []
+opening_hours = {"days":[dict(weekday=n, opens="06:00", closes="23:00") for n in range(7)], "overrides":[]}
+hours_requests = []
 remove_requests = []
 signed_in = True
 auth = Mock()
@@ -44,8 +47,19 @@ with patch('app.main.get_rental_catalog', return_value=catalog), TestClient(app)
         elif parsed.path == '/api/auth/logout':
             signed_in = False
             route.fulfill(json={'signed_in':False})
+        elif parsed.path == '/api/bookings/staff/schedule/hours':
+            if request.method == 'PUT':
+                hours_requests.append(request.post_data_json)
+                opening_hours['days'] = request.post_data_json['days']
+            route.fulfill(json=opening_hours)
+        elif parsed.path == '/api/bookings/staff/schedule/hours/date':
+            body = request.post_data_json
+            hours_requests.append(body)
+            opening_hours['overrides'] = [day for day in opening_hours['overrides'] if day['date'] != body['date']]
+            if not body['reset']: opening_hours['overrides'].append(body)
+            route.fulfill(json=opening_hours)
         elif parsed.path == '/api/bookings/staff/schedule' and request.method == 'GET':
-            route.fulfill(json=schedule_blocks)
+            route.fulfill(status=503 if schedule_unavailable else 200,json={'detail':'Schedule unavailable'} if schedule_unavailable else schedule_blocks)
         elif parsed.path == '/api/bookings/staff/schedule' and request.method == 'POST':
             body = request.post_data_json
             block_requests.append(body)
@@ -75,6 +89,7 @@ with patch('app.main.get_rental_catalog', return_value=catalog), TestClient(app)
             route.fulfill(status=response.status_code, body=response.content, content_type=response.headers.get('content-type', 'text/plain'))
     page.route('**/*', route_handler)
     page.goto('http://localhost/space-rentals')
+    if page.locator('#privacy-notice').is_visible(): page.locator('#privacy-dismiss').click()
     assert not page.locator('#booking-calendar').is_visible()
     page.locator('[data-book-card="full-field"] h3').click()
     assert page.locator('#booking-calendar').is_visible()
@@ -175,30 +190,48 @@ with patch('app.main.get_rental_catalog', return_value=catalog), TestClient(app)
     assert page.locator('#calendar-days button:not([disabled])').count()==0
     assert not page.locator('#reservation-form').is_visible()
     page.goto('http://localhost/admin/bookings')
+    page.locator('#hours-all-opens').wait_for()
+    page.locator('#schedule-date').fill(target.date().isoformat())
+    page.locator('#schedule-date').dispatch_event('change')
     page.locator('.staff-booking').wait_for()
+    page.locator('.staff-booking summary').click()
     page.screenshot(path='/tmp/fieldhouse-admin-mobile.png', full_page=True)
     page.set_viewport_size({'width':1440,'height':1000})
     page.screenshot(path='/tmp/fieldhouse-admin-desktop.png', full_page=True)
     page.set_viewport_size({'width':390,'height':844})
-    assert 'Pending approval' in page.locator('.staff-booking').inner_text()
+    assert 'Awaiting confirmation' in page.locator('.staff-booking').inner_text()
     assert '<script>test</script>' in page.locator('.staff-booking').inner_text()
     assert page.locator('.staff-booking script').count()==0
     page.on('dialog', lambda dialog: dialog.accept())
     page.locator('#availability-tab').click()
     assert page.locator('#staff-schedule').is_visible()
-    assert not page.locator('#staff-reservations').is_visible()
+    assert page.locator('#staff-reservations').is_visible()
+    assert page.locator('#reservations-tab').count() == 0
+    assert page.locator('#schedule-calendar .calendar-pending').count() == 1
+    assert page.locator('.hours-weekday[open]').count() == 0
+    assert page.locator('#schedule-day').count() == 0
     page.locator('#schedule-date').fill(target.date().isoformat())
     page.locator('#schedule-date').dispatch_event('change')
-    page.get_by_role('button',name='10:00–11:00 · Open',exact=True).click()
+    page.locator('#block-custom').click()
+    page.locator('[data-part=start]').fill('10:00')
+    page.locator('[data-part=end]').fill('11:00')
     page.locator('#block-form [name=title]').fill('Regular soccer team')
     page.locator('#block-save').click()
     page.wait_for_function("document.querySelector('#block-status').textContent.includes('Saved 1 date')")
     assert block_requests[-1]['mode'] == 'dates'
     assert block_requests[-1]['dates'][0]['start']=='10:00'
-    page.get_by_role('button',name='10:00–11:00 · Reserved',exact=True).wait_for()
+    page.locator('#block-close').click()
+    page.locator('.booked-entry summary').wait_for()
+    assert 'Booked' in page.locator('.booked-entry summary').inner_text()
+    assert 'Manually blocked' not in page.locator('.booked-entry summary').inner_text()
+    assert not page.locator('.booked-entry p').is_visible()
+    assert page.locator('#schedule-calendar .calendar-confirmed').inner_text() == '✓'
+    page.locator('.booked-entry summary').click()
+    assert 'Manually blocked' in page.locator('.booked-entry p').inner_text()
     page.get_by_role('button',name='Release this time',exact=True).click()
-    page.get_by_role('button',name='10:00–11:00 · Open',exact=True).wait_for()
+    page.wait_for_function("document.querySelectorAll('.booked-entry').length === 0")
     assert remove_requests[-1]['scope']=='occurrence'
+    page.locator('#block-custom').click()
     page.locator('#block-mode').select_option('weekly')
     page.locator('#block-first').fill(target.date().isoformat())
     page.locator('#block-last').fill((target+timedelta(days=14)).date().isoformat())
@@ -207,23 +240,82 @@ with patch('app.main.get_rental_catalog', return_value=catalog), TestClient(app)
     page.wait_for_function("document.querySelector('#block-status').textContent.includes('Saved 1 date')")
     assert block_requests[-1]['mode']=='weekly'
     assert block_requests[-1]['weekdays']==[target.weekday()]
+    page.locator('#block-close').click()
+    page.locator('.booked-entry summary').click()
     page.get_by_role('button',name='Remove entire series',exact=True).click()
-    page.get_by_role('button',name='10:00–11:00 · Open',exact=True).wait_for()
+    page.wait_for_function("document.querySelectorAll('.booked-entry').length === 0")
     assert remove_requests[-1]['scope']=='series'
+    # Weekly changes, date closures, restoring weekly hours, and calendar navigation.
+    page.locator('#hours-all-opens').fill('08:00')
+    page.locator('#hours-all-closes').fill('20:30')
+    page.locator('#hours-apply-all').click()
+    page.get_by_role('button', name='Save weekly hours', exact=True).click()
+    page.wait_for_function("document.querySelector('#hours-status').textContent.includes('Weekly hours saved')")
+    assert all(day['opens']=='08:00' for day in hours_requests[-1]['days'])
+    assert '8:00 AM–8:30 PM' in page.locator('#schedule-hours-summary').inner_text()
+    row = page.locator(f'[data-weekday="{target.weekday()}"]')
+    row.locator('summary').click()
+    row.locator('[data-hours-opens]').fill('09:30')
+    page.get_by_role('button', name='Save weekly hours', exact=True).click()
+    page.wait_for_function("document.querySelector('#schedule-hours-summary').textContent.includes('9:30 AM')")
+    page.locator('#date-hours-panel summary').click()
+    page.locator('#date-hours-closed').check()
+    page.get_by_role('button', name='Save date hours', exact=True).click()
+    page.wait_for_function("document.querySelector('#schedule-hours-summary').textContent === 'Closed all day'")
+    assert page.locator('#schedule-day button').count() == 0
+    page.get_by_role('button', name='Use weekly hours', exact=True).click()
+    page.wait_for_function("document.querySelector('#schedule-hours-summary').textContent.includes('9:30 AM')")
+    page.locator('#date-hours-opens').fill('11:00')
+    page.locator('#date-hours-closes').fill('15:00')
+    page.get_by_role('button', name='Save date hours', exact=True).click()
+    page.wait_for_function("document.querySelector('#schedule-hours-summary').textContent.includes('Custom hours')")
+    assert page.locator('#schedule-day').count() == 0
+    old_month = page.locator('#schedule-month').inner_text()
+    page.locator('#schedule-next').click()
+    page.wait_for_function("old => document.querySelector('#schedule-month').textContent !== old", arg=old_month)
+    page.locator('#schedule-previous').click()
+    page.wait_for_function("old => document.querySelector('#schedule-month').textContent === old", arg=old_month)
+    page.locator('#schedule-calendar button').filter(has_text=str(target.day)).first.click()
+    assert page.locator('#schedule-calendar [aria-pressed=true]').count() == 1
+    page.locator('#staff-schedule-title').scroll_into_view_if_needed()
+    page.screenshot(path='/tmp/fieldhouse-availability-mobile.png')
+    page.set_viewport_size({'width':1440,'height':1000})
+    page.locator('#staff-schedule-title').scroll_into_view_if_needed()
+    page.screenshot(path='/tmp/fieldhouse-availability-desktop.png')
+    page.locator('#weekly-hours-title').scroll_into_view_if_needed()
+    page.screenshot(path='/tmp/fieldhouse-hours-desktop.png')
+    page.set_viewport_size({'width':390,'height':844})
+
     assert page.evaluate('document.documentElement.scrollWidth <= window.innerWidth')
-    page.locator('#reservations-tab').click()
-    assert not page.locator('#staff-schedule').is_visible()
-    assert page.locator('#staff-reservations').is_visible()
-    page.get_by_role('button',name='Approve booking').click()
-    page.wait_for_function("document.querySelector('.staff-booking h2')?.textContent.includes('Approved')")
+    page.locator('.staff-booking summary').click()
+    page.get_by_role('button',name='Confirm booking').click()
+    page.wait_for_function("document.querySelector('.staff-booking summary')?.textContent.includes('Confirmed')")
+    assert page.locator('#schedule-calendar .calendar-pending').count() == 0
+    assert page.locator('#schedule-calendar .calendar-confirmed').inner_text() == '✓'
+    page.locator('.staff-booking summary').click()
     page.get_by_role('button',name='Cancel & release time').click()
-    page.wait_for_function("document.querySelector('#staff-status').textContent === 'No active bookings.'")
+    page.wait_for_function("document.querySelector('#staff-status').textContent === 'No active bookings this month.'")
+    # A failed schedule read must not disable hours editing or hide the page.
+    schedule_unavailable = True
+    page.reload()
+    page.wait_for_function("!document.querySelector('#weekly-hours-fields').disabled")
+    assert page.locator('#staff-schedule').is_visible()
+    page.locator('#hours-all-opens').fill('07:00')
+    page.locator('#hours-apply-all').click()
+    page.get_by_role('button', name='Save weekly hours', exact=True).click()
+    page.wait_for_function("document.querySelector('#hours-status').textContent.includes('Weekly hours saved')")
+    assert all(day['opens']=='07:00' for day in hours_requests[-1]['days'])
+    page.locator('#date-hours-panel summary').click()
+    page.locator('#date-hours-closed').check()
+    page.get_by_role('button', name='Save date hours', exact=True).click()
+    page.wait_for_function("document.querySelector('#schedule-hours-summary').textContent === 'Closed all day'")
+    assert page.locator('#date-hours-closed').is_enabled()
     page.locator('#staff-logout').click()
     page.wait_for_url('**/account')
     page.locator('#login-form').wait_for(state='visible')
     assert page.locator('#profile-admin a').count()==0
-    assert page.evaluate('localStorage.length')==0
+    assert page.evaluate("Object.keys(localStorage).every(key => key === 'fh_privacy_notice_v1')")
     assert not errors, errors
     browser.close()
 app.dependency_overrides.clear()
-print('Browser checks passed: modal card/keyboard opening, Escape/backdrop/close button, focus restoration, party pricing/food discount, pending submission, mobile layout, independent service selection, unavailable state, staff approval/cancellation/sign-out, no JS errors.')
+print('Browser checks passed: modal card/keyboard opening, Escape/backdrop/close button, focus restoration, party pricing/food discount, pending submission, mobile layout, independent service selection, unavailable state, staff approval/cancellation/sign-out, availability calendar, blocking dialog, weekly hours, date overrides and resets, no JS errors.')

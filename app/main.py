@@ -13,6 +13,7 @@ from app.routes.health import router as health_router
 from app.routes.contact import router as contact_router
 from app.routes.schedule import router as schedule_router
 from app.routes.bookings import router as bookings_router
+from app.routes.gallery import load_gallery_photos, router as gallery_router
 from app.routes.rentals import get_rental_catalog
 
 settings = get_settings()
@@ -29,6 +30,7 @@ app.include_router(health_router, prefix="/api")
 app.include_router(contact_router, prefix="/api")
 app.include_router(schedule_router, prefix="/api")
 app.include_router(bookings_router, prefix="/api")
+app.include_router(gallery_router, prefix="/api")
 web_directory = Path(__file__).resolve().parent / "web"
 app.mount("/assets", StaticFiles(directory=web_directory / "assets"), name="assets")
 templates = Jinja2Templates(directory=web_directory / "templates")
@@ -48,7 +50,7 @@ def about(request: Request):
     return templates.TemplateResponse(
         request=request,
         name="about.html",
-        context={"title": "About Us"},
+        context={"title": "About Us", "gallery_photos": load_gallery_photos(settings)},
     )
 
 

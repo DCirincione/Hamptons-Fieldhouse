@@ -11,7 +11,7 @@ Confirmed with the client October 1, 2026:
 
 - Full Field and Speed & Agility + Batting Cage are independent rental spaces.
   Speed/agility and the batting cage are always one combined rental.
-- Rental hours: daily 6 AM–11 PM; standard rental blocks: 60 minutes.
+- Default rental hours: daily 6 AM–11 PM, editable by staff; standard rental blocks: 60 minutes.
 - Birthday parties: 60 minutes on the full field, followed by 30 minutes in the
   party area. The field becomes available after the first hour. Both birthday
   packages share these same resources and cannot double-book them.
@@ -22,8 +22,7 @@ Confirmed with the client October 1, 2026:
   should confirm automatically through a separate server-side payment flow.
 
 Editable implementation defaults: starts on the hour, at least one hour's notice,
-up to 90 days ahead. Last rental start is 10 PM; last party start is 9 PM (ends
-10:30 PM). Custom durations require contacting staff. All dates/times are interpreted
+up to 90 days ahead. Starts must fit entirely within the effective hours for that date. With the default schedule, the last rental starts at 10 PM and the last party at 9 PM (ends 10:30 PM). Custom durations require contacting staff. All dates/times are interpreted
 in `America/New_York`, including daylight saving time.
 
 ## Customer accounts and approval tracking
@@ -35,10 +34,8 @@ phone number. Profile edits cannot modify admin permission or another account.
 New booking submissions require an email-confirmed session and are linked to
 its immutable user ID. Booking email is taken from that verified account on the
 server. Public availability browsing remains available without an account.
-The migration links older bookings only where their email matches an existing,
-email-confirmed account at migration time. Other older bookings remain unlinked;
-contact staff to reconcile those records. Later email changes do not transfer
-ownership of already-linked bookings.
+Older bookings may remain unlinked; contact staff to reconcile those records.
+Later email changes do not transfer ownership of already-linked bookings.
 
 The dashboard displays upcoming bookings and past/cancelled bookings, with
 **Pending approval**, **Approved**, or **Cancelled** for each date. It retrieves
@@ -59,11 +56,6 @@ This is a payment preference, not a charge or proof of payment; Square remains d
 The admin queue identifies repeating requests; staff approves/cancels individual
 dates, with changes appearing on the customer's next refresh.
 
-Apply the customer-portal migration before running the updated booking API.
-It adds ownership columns and service-role-only RPCs, while preserving the
-existing public table restrictions and conflict constraints. It does not change
-booking hours, prices, or payment collection.
-
 ## Rates and packages
 
 - Full Field: $200/hour; combined backspace: $75/hour. Both await Raf's final
@@ -83,21 +75,17 @@ Payment status remains `unpaid`; approving a booking does not record a payment.
 
 ## Setup and activation
 
-Apply these migrations in order in Supabase SQL Editor (not automatically applied):
-
-1. `supabase/migrations/202609260003_bookings.sql`
-2. `supabase/migrations/202610010001_rental_options.sql`
-3. `supabase/migrations/202610010002_pricing_and_packages.sql`
-4. `supabase/migrations/202610010003_booking_calendar.sql`
-5. `supabase/migrations/202610010004_staff_schedule.sql`
-6. `supabase/migrations/202610130001_customer_portal.sql`
-
-The fourth migration backfills existing reservations conservatively and fails on
-conflicting legacy bookings so they can be reconciled before launch. Existing
-custom rental durations retain their full occupied interval. It adds resource
-exclusion constraints, request idempotency, pending status, private settings,
-staff action records, and restricted database functions. Pending and confirmed
-reservations both occupy resource slots.
+Database schema and deployment changes are managed outside this repository.
+For the editable-hours feature, apply `scripts/sql/availability_hours.sql` to the
+existing booking database before deploying this application version. It adds
+weekly hours and date overrides and updates availability and staff block RPCs.
+The SQL is a deployment artifact; it has not been applied automatically. It
+expects the existing booking-policy, resource-slot, and staff-series schema.
+The existing reservation RPC must retain its shared lock on `booking_policy` and
+call `booking_availability`; hours writes take an exclusive lock on the same row
+so concurrent reservations and hours changes serialize. Verify those contracts
+against the externally managed schema before applying.
+Pending and confirmed reservations both occupy resource slots.
 
 Configure server-only environment variables:
 
@@ -165,13 +153,31 @@ payloads using an existing ID are rejected.
 
 ## Staff schedule controls
 
-The **Manage available times** section in `/admin/bookings` shows a selected day
-and space, open by default from 6 AM–11 PM. Reserved hours are crossed out; the
-list underneath shows exact intervals and whether they are pending bookings,
-approved bookings, or staff-entered blocks. A partial-hour reservation marks that
-hour occupied, while exact times remain visible in the list.
+The **Calendar & Bookings** section combines date selection and booking review.
+A yellow exclamation mark means a date has appointments awaiting confirmation;
+a green checkmark indicates confirmed bookings or manually booked times. The tooltip includes the number of booked appointments, counting a party
+or multi-space manual occurrence once rather than once per space.
+Selecting a date shows compact entries. Open a customer entry to confirm or
+cancel it. Manual entries say **Booked**; opening one reveals **Manually blocked**,
+the staff reason, and release controls. There is no open-hour grid in this view.
+Use **Block time** to open the form for individual or repeating manual reservations.
 
-- Click an open hour to prefill a block, or enter any minute-level time range.
+Weekly hours show common opening/closing times and an **Apply to all days** action.
+Each weekday is collapsed by default and expands for custom hours or closure.
+**Change hours for this date** overrides the weekly schedule for one date;
+**Use weekly hours** removes that override. Existing bookings are preserved.
+Hours load independently of bookings and reserved slots, so a schedule failure
+does not lock the hours editor. The schedule now reads protected resource slots
+directly and does not depend on the older `staff_schedule` RPC or `series_id` column.
+Monthly booking queries retrieve all pages, using Eastern month boundaries.
+
+On older installations missing `booking_block_series` or `series_id`, apply
+`scripts/sql/repair_manual_blocks.sql` to enable manual block creation and release.
+This rerunnable repair preserves hours, bookings, and existing blocks. It is
+separate from the already-applied hours update. Calendar reads and hours editing
+do not require this repair. Square payment handling remains deferred; the
+calendar uses booking status, and confirmation does not mark a payment paid.
+
 - Choose one or more spaces and a private customer/reason label.
 - Use **Individual dates and times** to enter several appointments with different
   times, **Repeat every day**, or **Repeat on selected weekdays** for regulars.
@@ -201,14 +207,6 @@ API validation and authorization tests:
 .venv/bin/python -m unittest discover -s tests -v
 ```
 
-Database migration and scheduling tests use an isolated PostgreSQL WASM runtime,
-not a live Supabase project:
-
-```sh
-npm install --prefix /tmp/fieldhouse-booking-check @electric-sql/pglite@0.5.8
-PGLITE_PATH=/tmp/fieldhouse-booking-check/node_modules/@electric-sql/pglite node tests/booking_database.mjs
-```
-
 Browser checks use installed Chrome and mocked API responses, verifying the
 customer and staff flows at desktop/mobile sizes:
 
@@ -216,8 +214,14 @@ customer and staff flows at desktop/mobile sizes:
 PYTHONPATH=. .venv/bin/python tests/browser_bookings.py
 ```
 
-Database design references: [PostgreSQL range exclusion constraints](https://www.postgresql.org/docs/15/rangetypes.html)
-and [Supabase function permissions](https://supabase.com/docs/guides/database/functions).
+
+The hours migration can also be checked in an isolated PostgreSQL runtime, using
+`tests/hours_database.mjs`. Set `PGLITE_PATH` to a temporary installation of
+`@electric-sql/pglite` and `BOOKING_SCHEMA_DIR` to the baseline booking SQL directory
+(the four migrations named in the test). The check covers closed days, weekly
+hours, date overrides/reset, stale booking rejection, retained reservations,
+expanded staff block hours, duration boundaries, and RPC permissions. This is a
+local schema test, not verification of the live externally managed database.
 
 ## Camps, clinics, waivers, and merchandise
 
