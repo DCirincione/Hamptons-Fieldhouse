@@ -14,6 +14,7 @@ from app.routes.contact import router as contact_router
 from app.routes.schedule import router as schedule_router
 from app.routes.bookings import router as bookings_router
 from app.routes.gallery import load_gallery_photos, router as gallery_router
+from app.routes.merch import router as merch_router
 from app.routes.rentals import get_rental_catalog
 
 settings = get_settings()
@@ -31,6 +32,7 @@ app.include_router(contact_router, prefix="/api")
 app.include_router(schedule_router, prefix="/api")
 app.include_router(bookings_router, prefix="/api")
 app.include_router(gallery_router, prefix="/api")
+app.include_router(merch_router, prefix="/api")
 web_directory = Path(__file__).resolve().parent / "web"
 app.mount("/assets", StaticFiles(directory=web_directory / "assets"), name="assets")
 templates = Jinja2Templates(directory=web_directory / "templates")
@@ -72,6 +74,13 @@ def space_rentals(request: Request):
             "packages": [o for o in offerings if o["category"] == "birthday"],
             "programs": [o for o in offerings if o["category"] in ("camp", "clinic", "event")],
         },
+    )
+
+
+@app.get("/merch", include_in_schema=False)
+def merch(request: Request):
+    return templates.TemplateResponse(
+        request=request, name="merch.html", context={"title": "Merch"}
     )
 
 

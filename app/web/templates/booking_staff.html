@@ -7,6 +7,7 @@
   <div id="staff-controls" class="staff-toolbar" hidden>
     <nav class="staff-section-nav" aria-label="Admin sections">
       <button type="button" id="availability-tab" aria-controls="staff-schedule" aria-pressed="true">Calendar &amp; Bookings</button>
+      <button type="button" id="contacts-tab" aria-controls="staff-contacts" aria-pressed="false">Contact Messages</button>
       <button type="button" id="gallery-tab" aria-controls="staff-gallery" aria-pressed="false">Photo Gallery</button>
     </nav>
     <div class="staff-utilities" aria-label="Workspace actions">
@@ -17,6 +18,17 @@
   </div>
   <p id="staff-status" role="status"></p>
   {% include "staff_schedule.html" %}
+  <section id="staff-contacts" hidden aria-labelledby="staff-contacts-title">
+    <h2 id="staff-contacts-title">Contact Messages</h2>
+    <p class="staff-section-description">Messages submitted through the website contact form, newest first.</p>
+    <div class="staff-section-nav contact-message-filters" aria-label="Filter contact messages">
+      <button type="button" data-contact-filter="all" aria-pressed="true">All</button>
+      <button type="button" data-contact-filter="unread" aria-pressed="false">Unread</button>
+      <button type="button" data-contact-filter="read" aria-pressed="false">Read</button>
+    </div>
+    <p id="contact-admin-status" role="status" aria-live="polite"></p>
+    <div id="contact-admin-list" class="contact-admin-list"></div>
+  </section>
   <section id="staff-gallery" hidden aria-labelledby="staff-gallery-title">
     <h2 id="staff-gallery-title">About Us Photo Gallery</h2>
     <p class="staff-section-description">Add, reorder, or remove photos shown in the About Us carousel.</p>
@@ -35,6 +47,7 @@
     <p id="gallery-admin-status" role="status"></p>
   </section>
 </div>
-<script src="/assets/booking-staff.js?v=8" defer></script>
+<script src="/assets/booking-staff.js?v=9" defer></script>
+<script src="/assets/contact-admin.js?v=2" defer></script>
 <script src="/assets/gallery-admin.js?v=3" defer></script>
 {% endblock %}

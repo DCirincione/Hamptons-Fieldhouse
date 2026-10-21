@@ -5,11 +5,14 @@
   function showSection(section) {
     activeSection = section;
     $('staff-schedule').hidden = section !== 'availability';
+    $('staff-contacts').hidden = section !== 'contacts';
     $('staff-gallery').hidden = section !== 'gallery';
     $('availability-tab').setAttribute('aria-pressed', String(section === 'availability'));
+    $('contacts-tab').setAttribute('aria-pressed', String(section === 'contacts'));
     $('gallery-tab').setAttribute('aria-pressed', String(section === 'gallery'));
   }
   $('availability-tab').addEventListener('click', () => showSection('availability'));
+  $('contacts-tab').addEventListener('click', () => { showSection('contacts'); window.dispatchEvent(new Event('fieldhouse:contacts-open')); });
   $('gallery-tab').addEventListener('click', () => { showSection('gallery'); window.dispatchEvent(new Event('fieldhouse:gallery-open')); });
   const money = n => new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'}).format(n / 100);
   const date = value => new Date(value).toLocaleString('en-US', {timeZone: 'America/New_York', dateStyle: 'medium', timeStyle: 'short'});
@@ -82,7 +85,7 @@
       const hasBlocks = (scheduleRows || []).some(row => !row.booking_id && localDate(row.starts_at) === $('schedule-date').value && ($('schedule-resource').value === 'all' || row.resource === $('schedule-resource').value));
       $('day-bookings-status').textContent = selectedBookings.length || hasBlocks ? 'Select a booked time to view details.' : 'No bookings on this date.';
   }
-  $('staff-refresh').addEventListener('click', load);
+  $('staff-refresh').addEventListener('click', () => { load(); if (activeSection === 'contacts') window.dispatchEvent(new Event('fieldhouse:contacts-open')); });
   $('staff-logout').addEventListener('click', async () => {
     $('staff-logout').disabled = true;
     try { await window.fieldhouseAuth.signOut(); }
