@@ -1,4 +1,4 @@
-"""Sandbox booking payments. Only verified Square completion approves dates."""
+"""Square booking payments. Only verified Square completion approves dates."""
 import base64
 import hashlib
 import hmac
@@ -18,10 +18,28 @@ from app.routes.bookings import get_booking_db
 router = APIRouter(prefix='/square', tags=['payments'])
 
 
+def square_credentials(settings):
+    if settings.square_environment == 'production':
+        return {
+            'access_token': settings.square_production_access_token.get_secret_value(),
+            'application_id': settings.square_production_application_id,
+            'location_id': settings.square_production_location_id,
+            'webhook_signature_key': settings.square_production_webhook_signature_key.get_secret_value(),
+            'api_base': 'https://connect.squareup.com/v2',
+        }
+    return {
+        'access_token': settings.square_sandbox_access_token.get_secret_value(),
+        'application_id': settings.square_sandbox_application_id,
+        'location_id': settings.square_sandbox_location_id,
+        'webhook_signature_key': settings.square_sandbox_webhook_signature_key.get_secret_value(),
+        'api_base': 'https://connect.squareupsandbox.com/v2',
+    }
+
+
 def configured(settings):
-    return (settings.square_environment == 'sandbox' and settings.square_booking_payments_enabled
-            and bool(settings.square_sandbox_access_token.get_secret_value())
-            and bool(settings.square_sandbox_application_id) and bool(settings.square_sandbox_location_id))
+    credentials = square_credentials(settings)
+    return (settings.square_booking_payments_enabled and bool(credentials['access_token'])
+            and bool(credentials['application_id']) and bool(credentials['location_id']))
 
 
 def require_square(settings):
@@ -31,9 +49,10 @@ def require_square(settings):
 
 def square_request(settings, method, path, body=None):
     require_square(settings)
+    credentials = square_credentials(settings)
     try:
-        response = httpx.request(method, 'https://connect.squareupsandbox.com/v2' + path,
-            headers={'Authorization': 'Bearer ' + settings.square_sandbox_access_token.get_secret_value(),
+        response = httpx.request(method, credentials['api_base'] + path,
+            headers={'Authorization': 'Bearer ' + credentials['access_token'],
                      'Square-Version': '2026-09-16'}, json=body, timeout=25)
         data = response.json()
     except (httpx.HTTPError, ValueError):
@@ -81,9 +100,10 @@ def payable_rows(db, user, ids):
 @router.get('/config')
 def config(response: Response, settings: Settings = Depends(get_settings)):
     response.headers['Cache-Control'] = 'no-store'
-    return {'enabled': bool(configured(settings)), 'environment': 'sandbox',
-            'application_id': settings.square_sandbox_application_id if configured(settings) else '',
-            'location_id': settings.square_sandbox_location_id if configured(settings) else ''}
+    credentials = square_credentials(settings)
+    return {'enabled': bool(configured(settings)), 'environment': settings.square_environment,
+            'application_id': credentials['application_id'] if configured(settings) else '',
+            'location_id': credentials['location_id'] if configured(settings) else ''}
 
 
 @router.post('/quote')
@@ -144,7 +164,8 @@ def pay(data: Charge, user=Depends(verified_customer), db=Depends(get_booking_db
     if data.source_id.upper() in ('CASH', 'EXTERNAL'):
         raise HTTPException(422, 'Use a card through the Square payment form.')
     attempt = db_rpc(db, 'begin_booking_square_payment', {'p_id': str(data.request_id), 'p_user_id': str(user.id),
-        'p_booking_ids': [str(i) for i in data.booking_ids], 'p_source': data.source_id, 'p_location': settings.square_sandbox_location_id, 'p_expected': data.expected_amount_cents})
+        'p_booking_ids': [str(i) for i in data.booking_ids], 'p_source': data.source_id,
+        'p_location': square_credentials(settings)['location_id'], 'p_expected': data.expected_amount_cents})
     return process(db, settings, attempt)
 
 
@@ -162,7 +183,7 @@ def reconcile(user=Depends(verified_customer), db=Depends(get_booking_db), setti
 @router.post('/webhook')
 async def webhook(request: Request, db=Depends(get_booking_db), settings: Settings=Depends(get_settings)):
     require_square(settings)
-    key = settings.square_sandbox_webhook_signature_key.get_secret_value()
+    key = square_credentials(settings)['webhook_signature_key']
     url = settings.square_webhook_url
     if not key or not url:
         raise HTTPException(503, 'Webhook is not configured.')

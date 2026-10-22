@@ -17,7 +17,10 @@
   }
   async function loadSdk() {
     if (!sdk) sdk = new Promise((resolve, reject) => {
-      const script = document.createElement('script'); script.src = 'https://sandbox.web.squarecdn.com/v1/square.js';
+      const script = document.createElement('script');
+      script.src = config?.environment === 'production'
+        ? 'https://web.squarecdn.com/v1/square.js'
+        : 'https://sandbox.web.squarecdn.com/v1/square.js';
       script.onload = resolve; script.onerror = () => { sdk = null; reject(new Error('Could not load Square. Please try again.')); };
       document.head.append(script);
     });
@@ -36,7 +39,7 @@
     const modal = document.createElement('div'); modal.className = 'square-payment-dialog';
     modal.setAttribute('role','dialog'); modal.setAttribute('aria-modal','true');
     modal.setAttribute('aria-labelledby','square-payment-title');
-    modal.innerHTML = '<button type="button" class="dialog-close" aria-label="Close payment">×</button><p class="eyebrow">SQUARE SANDBOX · TEST PAYMENT</p><h2 id="square-payment-title">Pay for your booking</h2><p class="square-payment-total"></p><p>Only the dates included in this payment will be approved automatically.</p><div id="square-card-container"></div><button type="button" class="button square-pay-button" disabled>Loading…</button><p class="square-payment-status" role="status" aria-live="polite"></p>';
+    modal.innerHTML = '<button type="button" class="dialog-close" aria-label="Close payment">×</button><p class="eyebrow square-payment-environment">SECURE PAYMENT WITH SQUARE</p><h2 id="square-payment-title">Pay for your booking</h2><p class="square-payment-total"></p><p>Only the dates included in this payment will be approved automatically.</p><div id="square-card-container"></div><button type="button" class="button square-pay-button" disabled>Loading…</button><p class="square-payment-status" role="status" aria-live="polite"></p>';
     overlay.append(modal); document.body.append(overlay);
     const button = modal.querySelector('.square-pay-button'), status = modal.querySelector('.square-payment-status'), close = modal.querySelector('.dialog-close');
     const cleanup = async () => {
@@ -73,6 +76,7 @@
     try {
       const cfg = await settings();
       if (!cfg.enabled) throw new Error('Square checkout is not available yet. Your booking remains pending.');
+      if (cfg.environment === 'sandbox') modal.querySelector('.square-payment-environment').textContent = 'SQUARE SANDBOX · TEST PAYMENT';
       const quote = await call('quote', {booking_ids:bookingIds});
       if (!opened) return;
       modal.querySelector('.square-payment-total').textContent = `${money(quote.amount_cents)} · ${quote.date_count} date${quote.date_count === 1 ? '' : 's'}`;
@@ -101,7 +105,8 @@
             card = null;
             submitting = false;
             modal.classList.add('square-payment-success');
-            modal.innerHTML = '<button type="button" class="dialog-close" aria-label="Close confirmation">×</button><div class="square-payment-success-icon" aria-hidden="true">✓</div><p class="eyebrow">SQUARE SANDBOX · TEST PAYMENT</p><h2 id="square-payment-title" tabindex="-1">Payment approved!</h2><p class="square-reserved-message"></p><p class="square-payment-total"></p><p>Only the dates covered by this payment are confirmed. Any other unpaid dates still need payment or staff approval.</p><a class="button" href="/account">View My Bookings</a><button type="button" class="staff-utility square-payment-done">Done</button>';
+            const environmentLabel = cfg.environment === 'sandbox' ? 'SQUARE SANDBOX · TEST PAYMENT' : 'SECURE PAYMENT WITH SQUARE';
+            modal.innerHTML = `<button type="button" class="dialog-close" aria-label="Close confirmation">×</button><div class="square-payment-success-icon" aria-hidden="true">✓</div><p class="eyebrow">${environmentLabel}</p><h2 id="square-payment-title" tabindex="-1">Payment approved!</h2><p class="square-reserved-message"></p><p class="square-payment-total"></p><p>Only the dates covered by this payment are confirmed. Any other unpaid dates still need payment or staff approval.</p><a class="button" href="/account">View My Bookings</a><button type="button" class="staff-utility square-payment-done">Done</button>`;
             modal.querySelector('.square-reserved-message').textContent = quote.date_count === 1
               ? 'Your time is reserved. We’ll see you at the Fieldhouse!'
               : `Your ${quote.date_count} paid dates are reserved. We’ll see you at the Fieldhouse!`;

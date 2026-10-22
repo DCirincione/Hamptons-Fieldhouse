@@ -44,14 +44,18 @@ templates = Jinja2Templates(directory=web_directory / "templates")
 async def payment_page_policy(request: Request, call_next):
     response = await call_next(request)
     if request.url.path in ('/account', '/space-rentals'):
+        square_cdn = ('https://web.squarecdn.com' if settings.square_environment == 'production'
+                      else 'https://sandbox.web.squarecdn.com')
+        square_connect = ('https://pci-connect.squareup.com' if settings.square_environment == 'production'
+                          else 'https://pci-connect.squareupsandbox.com')
         response.headers['Content-Security-Policy'] = (
             "default-src 'self'; base-uri 'self'; object-src 'none'; "
-            "script-src 'self' https://sandbox.web.squarecdn.com; "
-            "frame-src 'self' https://sandbox.web.squarecdn.com https://api.squareupsandbox.com; "
-            "connect-src 'self' https://sandbox.web.squarecdn.com https://pci-connect.squareupsandbox.com https://o160250.ingest.sentry.io; "
-            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://sandbox.web.squarecdn.com; "
+            f"script-src 'self' {square_cdn}; "
+            f"frame-src 'self' {square_cdn}; "
+            f"connect-src 'self' {square_cdn} {square_connect} https://o160250.ingest.sentry.io; "
+            f"style-src 'self' 'unsafe-inline' https://fonts.googleapis.com {square_cdn}; "
             "font-src 'self' https://fonts.gstatic.com https://square-fonts-production-f.squarecdn.com https://d1g145x70srn7h.cloudfront.net https://cash-f.squarecdn.com; "
-            "img-src 'self' data: https:; form-action 'self' https://api.squareupsandbox.com; frame-ancestors 'self'"
+            "img-src 'self' data: https:; form-action 'self'; frame-ancestors 'self'"
         )
     if request.url.path.startswith('/api/square/'):
         response.headers['Cache-Control'] = 'no-store'

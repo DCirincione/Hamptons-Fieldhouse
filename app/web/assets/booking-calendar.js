@@ -8,6 +8,9 @@
   window.fieldhouseSquare.settings().then(config => {
     $('square-booking-option').hidden = !config.enabled;
     $('square-booking-option').disabled = !config.enabled;
+    if (config.enabled) fields.payment_method.value = 'square';
+    else if (fields.payment_method.value === 'square') fields.payment_method.value = 'venmo';
+    total();
   }).catch(() => {});
   let customer = null;
   function updateCustomer(user) {
