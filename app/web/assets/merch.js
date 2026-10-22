@@ -6,11 +6,21 @@
   const cartDialog = document.getElementById('merch-cart-dialog');
   const cartCounts = document.querySelectorAll('.merch-cart-count');
   const cartItems = document.getElementById('merch-cart-items');
+  const checkout = document.getElementById('merch-checkout');
+  const checkoutStatus = document.getElementById('merch-checkout-status');
   const money = value => new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'}).format(value);
   const storageKey = 'fieldhouse-merch-cart-v1';
   let activeProduct;
   let activeVariant;
+  let checkoutEnabled = false;
   let cart = readCart();
+
+  if (new URLSearchParams(location.search).get('checkout') === 'complete') {
+    cart = [];
+    try { localStorage.removeItem(storageKey); } catch (_) {}
+    document.getElementById('merch-checkout-success').hidden = false;
+    history.replaceState({}, '', '/merch');
+  }
 
   function readCart() {
     try {
@@ -105,6 +115,7 @@
       const price = document.createElement('strong'); price.textContent = money(Number(item.price || 0) * item.quantity); row.append(price); cartItems.append(row);
     });
     document.getElementById('merch-cart-subtotal').textContent = money(cart.reduce((total, item) => total + Number(item.price || 0) * item.quantity, 0));
+    checkout.disabled = !checkoutEnabled || !cart.length;
   }
 
   document.getElementById('merch-color').addEventListener('change', updateVariant);
@@ -123,6 +134,21 @@
   document.querySelectorAll('.merch-cart-trigger').forEach(button => button.addEventListener('click', () => { renderCart(); cartDialog.showModal(); }));
   document.querySelectorAll('.merch-dialog-close').forEach(button => button.addEventListener('click', () => button.closest('dialog').close()));
   document.querySelectorAll('.merch-dialog').forEach(dialog => dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); }));
+  checkout.addEventListener('click', async () => {
+    if (!checkoutEnabled || !cart.length || checkout.disabled) return;
+    checkout.disabled = true; checkout.textContent = 'Opening secure checkout…'; checkoutStatus.textContent = '';
+    try {
+      const response = await fetch('/api/merch/checkout', {
+        method: 'POST', headers: {'Content-Type':'application/json', 'X-Fieldhouse-Request':'1'},
+        body: JSON.stringify({request_id: crypto.randomUUID(), items: cart.map(item => ({variant_id:Number(item.variantId), quantity:item.quantity}))}),
+      });
+      const result = await response.json();
+      if (!response.ok) throw new Error(typeof result.detail === 'string' ? result.detail : 'Could not start checkout.');
+      location.assign(result.checkout_url);
+    } catch (error) {
+      checkoutStatus.textContent = error.message; checkout.disabled = false; checkout.textContent = 'Checkout with Square';
+    }
+  });
 
   renderCart();
   fetch('/api/merch', {cache: 'no-store'}).then(async response => {
@@ -130,6 +156,9 @@
     if (!response.ok) throw new Error(typeof data.detail === 'string' ? data.detail : 'Merchandise could not be loaded.');
     return data;
   }).then(data => {
+    checkoutEnabled = Boolean(data.checkout_enabled);
+    checkoutStatus.textContent = checkoutEnabled ? 'Square will collect your shipping address and show the final total.' : 'Checkout is temporarily unavailable.';
+    renderCart();
     if (!data.products.length) { status.textContent = 'New Fieldhouse merchandise is coming soon.'; return; }
     data.products.forEach(product => {
       const card = template.content.firstElementChild.cloneNode(true); const image = card.querySelector('img');

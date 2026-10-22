@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     printful_store_id: str = ""
     square_environment: Literal["sandbox", "production"] = "sandbox"
     square_booking_payments_enabled: bool = False
+    square_merch_checkout_enabled: bool = False
+    square_merch_shipping_cents: int = 0
     square_sandbox_webhook_signature_key: SecretStr = SecretStr("")
     square_webhook_url: str = ""
     square_sandbox_access_token: SecretStr = SecretStr("")

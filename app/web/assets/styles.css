@@ -768,6 +768,8 @@ body.booking-modal-open { overflow: hidden; }
 #staff-bookings .staff-booking p { overflow-wrap: anywhere; }
 
 .merch-page { padding-bottom: 80px; }
+.merch-checkout-success { display: grid; gap: 4px; margin: 28px 0 0; padding: 18px 20px; border: 1px solid #80c99f; border-radius: 10px; background: #e7f7ed; color: #125a32; }
+.merch-checkout-success[hidden] { display: none; }
 .merch-heading-inner { display: flex; align-items: center; justify-content: space-between; gap: 40px; }
 .merch-heading-inner > div:first-child { min-width: 0; }
 .merch-header-cart { display: grid; grid-template-columns: 48px minmax(120px, 1fr) auto 18px; align-items: center; gap: 14px; min-width: 275px; padding: 13px 16px; border: 1px solid color-mix(in srgb, var(--navy) 22%, white); border-radius: 14px; background: white; color: var(--navy); box-shadow: 0 8px 24px rgb(0 38 93 / 12%); text-align: left; cursor: pointer; transition: transform .15s, box-shadow .15s, border-color .15s; }
@@ -839,7 +841,8 @@ body.booking-modal-open { overflow: hidden; }
 .merch-cart-controls .merch-remove { width: auto; margin-left: 5px; border: 0; color: var(--navy); text-decoration: underline; }
 .merch-cart-footer { margin-top: 24px; }
 .merch-cart-footer > div { display: flex; justify-content: space-between; margin-bottom: 18px; font-size: 22px; }
-.merch-cart-footer .button { width: 100%; opacity: .65; cursor: not-allowed; }
+.merch-cart-footer .button { width: 100%; }
+.merch-cart-footer .button:disabled { opacity: .65; cursor: not-allowed; }
 .merch-cart-footer p { margin-bottom: 0; text-align: center; color: var(--muted); font-size: 14px; }
 @media (max-width: 900px) { .merch-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 700px) { .merch-heading-inner { align-items: stretch; flex-direction: column; gap: 22px; } .merch-header-cart { width: 100%; min-width: 0; } .merch-dialog { padding: 24px 18px; } .merch-product-layout { grid-template-columns: 1fr; gap: 22px; } }

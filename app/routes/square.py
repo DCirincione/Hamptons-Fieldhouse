@@ -36,10 +36,14 @@ def square_credentials(settings):
     }
 
 
-def configured(settings):
+def credentials_configured(settings):
     credentials = square_credentials(settings)
-    return (settings.square_booking_payments_enabled and bool(credentials['access_token'])
+    return (bool(credentials['access_token'])
             and bool(credentials['application_id']) and bool(credentials['location_id']))
+
+
+def configured(settings):
+    return settings.square_booking_payments_enabled and credentials_configured(settings)
 
 
 def require_square(settings):
@@ -48,7 +52,8 @@ def require_square(settings):
 
 
 def square_request(settings, method, path, body=None):
-    require_square(settings)
+    if not credentials_configured(settings):
+        raise HTTPException(503, 'Square is not configured yet.')
     credentials = square_credentials(settings)
     try:
         response = httpx.request(method, credentials['api_base'] + path,

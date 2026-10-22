@@ -1,11 +1,16 @@
-"""Read-only Printful catalog used by the merchandise page."""
+"""Printful catalog and Square-hosted merchandise checkout."""
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from time import monotonic
+from uuid import UUID
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException, Response
+from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from pydantic import BaseModel, ConfigDict, Field
 
+from app.auth import require_browser_request
 from app.config import Settings, get_settings
+from app.routes.square import credentials_configured, square_credentials, square_request
 
 router = APIRouter(prefix="/merch", tags=["merchandise"])
 PRINTFUL_API = "https://api.printful.com"
@@ -58,6 +63,7 @@ def _product(product: dict, headers: dict[str, str]) -> dict | None:
             "id": variant.get("id"), "name": variant.get("name") or "Standard",
             "size": variant.get("size"), "color": variant.get("color"),
             "price": variant.get("retail_price"), "image": image, "images": images,
+            "square_variant_id": variant.get("external_id") or variant.get("external_variant_id"),
         })
     if not variants:
         return None
@@ -103,4 +109,93 @@ def get_merch_catalog(settings: Settings) -> list[dict]:
 @router.get("")
 def merch_catalog(response: Response, settings: Settings = Depends(get_settings)):
     response.headers["Cache-Control"] = "public, max-age=60, stale-while-revalidate=300"
-    return {"products": get_merch_catalog(settings), "checkout_enabled": False}
+    return {"products": get_merch_catalog(settings),
+            "checkout_enabled": settings.square_merch_checkout_enabled and credentials_configured(settings),
+            "checkout_environment": settings.square_environment}
+
+
+class CartItem(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    variant_id: int
+    quantity: int = Field(ge=1, le=10)
+
+
+class MerchCheckout(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    request_id: UUID
+    items: list[CartItem] = Field(min_length=1, max_length=30)
+
+
+def _cents(value) -> int:
+    try:
+        return int((Decimal(str(value)) * 100).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
+    except (InvalidOperation, TypeError, ValueError):
+        raise HTTPException(409, "A merchandise price is unavailable. Refresh the shop and try again.") from None
+
+
+@router.post("/checkout", dependencies=[Depends(require_browser_request)])
+def merch_checkout(data: MerchCheckout, request: Request, settings: Settings = Depends(get_settings)):
+    if not settings.square_merch_checkout_enabled or not credentials_configured(settings):
+        raise HTTPException(503, "Merch checkout is not available yet.")
+    requested: dict[int, int] = {}
+    for item in data.items:
+        requested[item.variant_id] = requested.get(item.variant_id, 0) + item.quantity
+        if requested[item.variant_id] > 10:
+            raise HTTPException(422, "Choose no more than 10 of each item.")
+
+    variants = {}
+    for product in get_merch_catalog(settings):
+        for variant in product["variants"]:
+            if variant.get("id") is not None:
+                variants[int(variant["id"])] = (product, variant)
+    if any(variant_id not in variants for variant_id in requested):
+        raise HTTPException(409, "One or more items are no longer available. Refresh the shop and try again.")
+
+    line_items = []
+    for variant_id, quantity in requested.items():
+        product, variant = variants[variant_id]
+        cents = _cents(variant.get("price"))
+        if cents <= 0:
+            raise HTTPException(409, "A merchandise price is unavailable. Refresh the shop and try again.")
+        if settings.square_environment == "production":
+            catalog_id = variant.get("square_variant_id")
+            if not catalog_id:
+                raise HTTPException(409, "This item is not connected to the Square catalog yet.")
+            line_items.append({"catalog_object_id": str(catalog_id), "quantity": str(quantity)})
+        else:
+            line_items.append({
+                "name": product["name"],
+                "variation_name": " · ".join(filter(None, (variant.get("color"), variant.get("size")))) or "Standard",
+                "quantity": str(quantity), "item_type": "ITEM",
+                "base_price_money": {"amount": cents, "currency": "USD"},
+            })
+
+    origin = str(request.base_url).rstrip("/")
+    credentials = square_credentials(settings)
+    checkout_options = {
+        "ask_for_shipping_address": True,
+        "allow_tipping": False,
+        "enable_coupon": True,
+        "redirect_url": f"{origin}/merch?checkout=complete",
+    }
+    if settings.square_merch_shipping_cents > 0:
+        checkout_options["shipping_fee"] = {
+            "name": "Standard shipping",
+            "charge": {"amount": settings.square_merch_shipping_cents, "currency": "USD"},
+        }
+    code, result = square_request(settings, "POST", "/online-checkout/payment-links", {
+        "idempotency_key": str(data.request_id),
+        "description": "Hamptons Fieldhouse merchandise",
+        "payment_note": f"Fieldhouse merch order {data.request_id}",
+        "order": {
+            "location_id": credentials["location_id"],
+            "reference_id": str(data.request_id),
+            "line_items": line_items,
+            "pricing_options": {"auto_apply_taxes": settings.square_environment == "production"},
+        },
+        "checkout_options": checkout_options,
+    })
+    payment_link = result.get("payment_link", {})
+    if code not in (200, 201) or not payment_link.get("url"):
+        raise HTTPException(502, "Square could not start checkout. Please try again.")
+    return {"checkout_url": payment_link["url"]}
