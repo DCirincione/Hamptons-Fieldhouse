@@ -26,7 +26,7 @@ def get_rental_catalog() -> list[dict]:
                 ),
             )
             return db.table("offerings").select(
-                "slug,category,name,description,details,price_cents,duration_minutes,capacity,sort_order"
+                "slug,category,name,description,details,price_cents,duration_minutes,capacity,sort_order,program_data"
             ).eq("published", True).order("sort_order").execute().data
         except (APIError, HTTPError, ValueError):
             logger.warning("Offerings unavailable; showing the approved layout preview")

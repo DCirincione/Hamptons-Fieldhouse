@@ -263,7 +263,7 @@
       const lines = [bookings.every(b => b.status === 'pending') ? 'Your time is held — awaiting staff approval' : 'Your booking request',
         `${data.name} · ${bookings.length} date${bookings.length === 1 ? '' : 's'}`,
         ...bookings.map(b => `${dateLabel(nyDate(b.starts_at))} · ${time(b.starts_at)}–${time(b.ends_at)} Eastern`),
-        `Total: ${money(result.total_price_cents)} · ${square ? 'Continue to Square to pay' : 'Payment arranged with staff'}`,
+        `Total: ${money(result.total_price_cents)} · ${square ? 'Opening Square secure checkout…' : 'Payment arranged with staff'}`,
         ...(bookings.length > 1 ? [`Selected payment: ${body.payment_plan === 'all_sessions' ? 'all sessions' : 'first session'} · ${money(body.payment_plan === 'all_sessions' ? result.total_price_cents : bookings[0].total_price_cents)}.${body.payment_plan === 'one_session' ? ' Remaining sessions stay pending until paid or approved by staff.' : ''}`] : []),
         `Request reference: ${result.request_id}`,
         'Track each date and pay unpaid bookings in My Bookings. Contact 631-278-4374 for help.'];
@@ -276,10 +276,21 @@
       if (square) {
         const paidDates = body.payment_plan === 'all_sessions' ? bookings : bookings.slice(0,1);
         const ids = paidDates.map(b => b.id || b.reference);
-        await window.fieldhouseSquare.open(ids, () => {
-          receipt.querySelector('h3').textContent = 'Payment successful — paid dates approved';
-          receipt.querySelectorAll('p')[bookings.length + 1].textContent = `${paidDates.length} paid date${paidDates.length === 1 ? '' : 's'} approved. See My Bookings for each date’s status.`;
-        });
+        try {
+          await window.fieldhouseSquare.open(ids, checkoutUrl => {
+            const checkoutLink = document.createElement('a');
+            checkoutLink.href = checkoutUrl;
+            checkoutLink.className = 'button';
+            checkoutLink.textContent = 'Continue to secure Square checkout →';
+            checkoutLink.setAttribute('aria-label', 'Continue to Square’s secure checkout');
+            receipt.append(checkoutLink);
+          });
+        } catch (error) {
+          const checkoutError = document.createElement('p');
+          checkoutError.setAttribute('role', 'alert');
+          checkoutError.textContent = `Your booking is saved, but secure checkout did not open: ${error.message} You can retry from My Bookings.`;
+          receipt.append(checkoutError);
+        }
       }
     } catch (error) {
       $('reservation-status').textContent = `${error.message || 'Connection interrupted.'} If your connection was interrupted, retry without changing your details to avoid a duplicate request.`;

@@ -81,6 +81,11 @@ These actions record full payment received for that date without charging the cu
 ## Setup and activation
 
 Database schema and deployment changes are managed outside this repository.
+For dynamic service management, apply `scripts/sql/dynamic_booking_offerings.sql`
+to the existing booking database before deploying this application version. It
+maps each bookable service to the calendar resources it reserves. New field
+rentals can select the existing full-field, backspace, or party-area resources;
+a partial-field service currently reserves the selected entire resource.
 For the editable-hours feature, apply `scripts/sql/availability_hours.sql` to the
 existing booking database before deploying this application version. It adds
 weekly hours and date overrides and updates availability and staff block RPCs.
@@ -230,10 +235,18 @@ local schema test, not verification of the live externally managed database.
 
 ## Camps, clinics, waivers, and merchandise
 
-The future camp/clinic admin portal should support title, flyer, description,
-dates, and cost. Registration must collect name, phone, email, and a signed waiver.
-Camp registration is separate from the rental/party reservation flow implemented
-here and is not yet enabled.
+Camp and clinic listings are configured from the staff Services & Pricing section.
+Each listing supports an uploaded flyer, age or grade range, session dates,
+activities, multiple price options, and notes. The Add Camp action starts with
+the Multi Sport Summer Camp details from the former listing, leaves dates blank,
+and keeps the listing unpublished until staff add current dates and choose to
+publish it. Apply or rerun `scripts/sql/dynamic_booking_offerings.sql` in Supabase
+to add the program details and registration tables.
+
+The public page presents these details as program cards. Registration collects
+parent or guardian and participant details, requires confirmation that the
+waiver was completed, and sends the selected price through Square hosted
+checkout. Staff can review the latest registrations and payment status in Admin.
 
 Continue using https://www.hamptonsfieldhouse.com/waiver. The site links to that
 page; it does not verify completion or attach signed waivers to registrations.

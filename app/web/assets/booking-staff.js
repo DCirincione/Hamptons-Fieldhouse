@@ -5,13 +5,16 @@
   function showSection(section) {
     activeSection = section;
     $('staff-schedule').hidden = section !== 'availability';
+    $('staff-offerings').hidden = section !== 'offerings';
     $('staff-contacts').hidden = section !== 'contacts';
     $('staff-gallery').hidden = section !== 'gallery';
     $('availability-tab').setAttribute('aria-pressed', String(section === 'availability'));
+    $('offerings-tab').setAttribute('aria-pressed', String(section === 'offerings'));
     $('contacts-tab').setAttribute('aria-pressed', String(section === 'contacts'));
     $('gallery-tab').setAttribute('aria-pressed', String(section === 'gallery'));
   }
   $('availability-tab').addEventListener('click', () => showSection('availability'));
+  $('offerings-tab').addEventListener('click', () => { showSection('offerings'); window.dispatchEvent(new Event('fieldhouse:offerings-open')); });
   $('contacts-tab').addEventListener('click', () => { showSection('contacts'); window.dispatchEvent(new Event('fieldhouse:contacts-open')); });
   $('gallery-tab').addEventListener('click', () => { showSection('gallery'); window.dispatchEvent(new Event('fieldhouse:gallery-open')); });
   const money = n => new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'}).format(n / 100);
@@ -94,7 +97,11 @@
       const hasBlocks = (scheduleRows || []).some(row => !row.booking_id && localDate(row.starts_at) === $('schedule-date').value && ($('schedule-resource').value === 'all' || row.resource === $('schedule-resource').value));
       $('day-bookings-status').textContent = selectedBookings.length || hasBlocks ? 'Select a booked time to view details.' : 'No bookings on this date.';
   }
-  $('staff-refresh').addEventListener('click', () => { load(); if (activeSection === 'contacts') window.dispatchEvent(new Event('fieldhouse:contacts-open')); });
+  $('staff-refresh').addEventListener('click', () => {
+    load();
+    if (activeSection === 'contacts') window.dispatchEvent(new Event('fieldhouse:contacts-open'));
+    if (activeSection === 'offerings') window.dispatchEvent(new Event('fieldhouse:offerings-refresh'));
+  });
   $('staff-logout').addEventListener('click', async () => {
     $('staff-logout').disabled = true;
     try { await window.fieldhouseAuth.signOut(); }

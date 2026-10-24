@@ -7,6 +7,7 @@
   <div id="staff-controls" class="staff-toolbar" hidden>
     <nav class="staff-section-nav" aria-label="Admin sections">
       <button type="button" id="availability-tab" aria-controls="staff-schedule" aria-pressed="true">Calendar &amp; Bookings</button>
+      <button type="button" id="offerings-tab" aria-controls="staff-offerings" aria-pressed="false">Services &amp; Pricing</button>
       <button type="button" id="contacts-tab" aria-controls="staff-contacts" aria-pressed="false">Contact Messages</button>
       <button type="button" id="gallery-tab" aria-controls="staff-gallery" aria-pressed="false">Photo Gallery</button>
     </nav>
@@ -18,6 +19,36 @@
   </div>
   <p id="staff-status" role="status"></p>
   {% include "staff_schedule.html" %}
+  <section id="staff-offerings" hidden aria-labelledby="staff-offerings-title">
+    <h2 id="staff-offerings-title">Services &amp; Pricing</h2>
+    <p class="staff-section-description">Edit bookable services or add a new field rental, camp, or clinic. Each group stays compact until you open a service.</p>
+    <p id="offering-admin-status" role="status" aria-live="polite">Open a service to edit its details.</p>
+    <div class="offering-admin-groups">
+      <section class="offering-admin-group" aria-labelledby="admin-field-rentals-title">
+        <div class="offering-admin-group-heading"><h3 id="admin-field-rentals-title">Field Rentals</h3><button type="button" class="staff-utility offering-create-trigger" data-create-category="field_rental">＋ Add field rental</button></div>
+        <div id="offering-admin-field-rentals" class="offering-admin-list"></div>
+      </section>
+      <section class="offering-admin-group" aria-labelledby="admin-camps-title">
+        <div class="offering-admin-group-heading"><h3 id="admin-camps-title">Camps &amp; Clinics</h3><button type="button" class="staff-utility offering-create-trigger" data-create-category="camp">＋ Add camp or clinic</button></div>
+        <p class="offering-admin-empty" id="offering-admin-camps-empty">No camps or clinics yet. Add one when you’re ready.</p>
+        <div id="offering-admin-camps" class="offering-admin-list"></div>
+      </section>
+      <section class="offering-admin-group" aria-labelledby="admin-birthdays-title">
+        <div class="offering-admin-group-heading"><h3 id="admin-birthdays-title">Birthday Parties</h3><button type="button" class="staff-utility offering-create-trigger" data-create-category="birthday">＋ Add birthday package</button></div>
+        <div id="offering-admin-birthdays" class="offering-admin-list"></div>
+      </section>
+    </div>
+    <details class="card offering-admin-extras">
+      <summary>Party add-on prices <span>Additional child and pizza</span></summary>
+      <p>These prices are added to birthday party bookings when selected.</p>
+      <div id="offering-extra-list" class="offering-extra-list"></div>
+    </details>
+    <details class="card camp-registration-admin">
+      <summary>Camp registrations <span id="camp-registration-count">Latest registrations and payment status</span></summary>
+      <p id="camp-registration-admin-status" role="status" aria-live="polite"></p>
+      <div id="camp-registration-admin-list" class="camp-registration-admin-list"></div>
+    </details>
+  </section>
   <section id="staff-contacts" hidden aria-labelledby="staff-contacts-title">
     <h2 id="staff-contacts-title">Contact Messages</h2>
     <p class="staff-section-description">Messages submitted through the website contact form, newest first.</p>
@@ -47,7 +78,8 @@
     <p id="gallery-admin-status" role="status"></p>
   </section>
 </div>
-<script src="/assets/booking-staff.js?v=10" defer></script>
+<script src="/assets/booking-staff.js?v=12" defer></script>
+<script src="/assets/offering-admin.js?v=17" defer></script>
 <script src="/assets/contact-admin.js?v=2" defer></script>
 <script src="/assets/gallery-admin.js?v=3" defer></script>
 {% endblock %}

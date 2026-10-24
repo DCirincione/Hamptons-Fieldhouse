@@ -23,7 +23,16 @@
   </section>
   <section class="rental-section" id="camps-clinics" aria-labelledby="programs-title">
     <div class="rental-section-heading"><div><p class="eyebrow">BUILD SKILLS. HAVE FUN.</p><h2 id="programs-title">Camps &amp; Clinics</h2><p>Find new ways to play and develop your game.</p></div></div>
-    {% if programs %}<div class="rental-grid">{% for item in programs %}<article class="card rental-card"><p class="eyebrow">{{ item.category }}</p><h3>{{ item.name }}</h3><p>{{ item.description }}</p><ul>{% for detail in item.details %}<li>{{ detail|replace("Daily rental hours: 6 AM–11 PM", "View calendar for current rental hours") }}</li>{% endfor %}</ul><button class="button" type="button" data-booking-option="{{ item.name }}">View registration details ↗</button></article>{% endfor %}</div>
+    {% if programs %}<div class="program-grid">{% for item in programs %}{% set program = item.program_data or {} %}<article class="card program-card">
+      <div class="program-content"><p class="eyebrow">{{ 'CAMP' if item.category == 'camp' else 'CLINIC' }}</p><h3>{{ item.name }}</h3><p class="program-description">{{ item.description }}</p>
+        {% if program.age_range %}<p class="program-audience">{{ program.age_range }}</p>{% endif %}
+        {% if program.sessions %}<section class="program-facts" aria-label="Session dates"><h4>Upcoming sessions</h4><ul>{% for session in program.sessions %}<li>{{ session }}</li>{% endfor %}</ul></section>{% endif %}
+        {% if program.activities %}<section class="program-facts"><h4>What we’ll do</h4><ul class="program-activities">{% for activity in program.activities %}<li>{{ activity }}</li>{% endfor %}</ul></section>{% endif %}
+        {% if item.details %}<ul class="program-details">{% for detail in item.details %}<li>{{ detail }}</li>{% endfor %}</ul>{% endif %}
+        <div class="program-card-actions"><button class="button button-secondary" type="button" data-camp-info="{{ item.slug }}">More info</button>
+        {% if program.sessions and program.price_options %}<button class="button" type="button" data-camp-register="{{ item.slug }}">Register <span aria-hidden="true">↗</span></button>{% else %}<p class="program-registration-soon">Registration details are being finalized.</p>{% endif %}</div>
+      </div>
+    </article>{% endfor %}</div>
     {% else %}<div class="card programs-empty"><div><h3>The next session starts here.</h3><p>Upcoming camps and clinics will be listed here with flyers, descriptions, dates, costs, and registration details.</p></div><span class="status-pill">Schedule: TBD</span></div>{% endif %}
   </section>
   <section class="rental-section" id="birthday-parties" aria-labelledby="parties-title">
@@ -35,6 +44,31 @@
   </section>
 </div>
 {% include "booking_calendar.html" %}
+<dialog class="camp-info-dialog" id="camp-info-dialog" aria-labelledby="camp-info-title">
+  <button class="dialog-close" type="button" aria-label="Close program information">×</button>
+  <div id="camp-info-content"></div>
+</dialog>
+<dialog class="camp-registration-dialog" id="camp-registration-dialog" aria-labelledby="camp-registration-title">
+  <button class="dialog-close" type="button" aria-label="Close registration form">×</button>
+  <p class="eyebrow">CAMPS &amp; CLINICS</p><h2 id="camp-registration-title">Register</h2>
+  <form id="camp-registration-form">
+    <input type="hidden" id="camp-registration-slug">
+    <div class="camp-registration-fields">
+      <label>Session<select id="camp-registration-session" required></select></label>
+      <label>Registration option<select id="camp-registration-price" required></select></label>
+      <label>Parent or guardian name<input id="camp-guardian-name" autocomplete="name" required maxlength="160"></label>
+      <label>Email<input id="camp-guardian-email" type="email" autocomplete="email" required maxlength="254"></label>
+      <label>Phone<input id="camp-guardian-phone" type="tel" autocomplete="tel" required maxlength="30"></label>
+      <label>Participant name<input id="camp-participant-name" required maxlength="160"></label>
+      <label>Participant grade<input id="camp-participant-grade" required maxlength="80" placeholder="For example, Grade 4"></label>
+    </div>
+    <label class="camp-waiver-confirm"><input id="camp-waiver-confirmed" type="checkbox" required><span>I confirm that the participant’s parent or guardian has <a href="https://waiver.smartwaiver.com/w/xmreh5y8zi6znfqhpwnvbw/web/" target="_blank" rel="noopener noreferrer">completed the participant waiver</a>.</span></label>
+    <p class="camp-registration-consent">You’ll continue to Square’s secure checkout to pay the selected registration price.</p>
+    <button class="button" type="submit">Continue to secure checkout</button>
+    <p id="camp-registration-status" role="status" aria-live="polite"></p>
+  </form>
+</dialog>
+<script id="camp-program-data" type="application/json">{{ programs|tojson }}</script>
 <noscript><p class="container">Please enable JavaScript to view booking times, or call <a href="tel:+16312784374">631-278-4374</a>.</p></noscript>
 <dialog class="booking-preview" id="booking-preview" aria-labelledby="booking-preview-title" aria-describedby="booking-preview-description">
   <button class="dialog-close" type="button" aria-label="Close booking details">×</button>
@@ -45,6 +79,7 @@
   <a class="button" href="tel:+16312784374">Call the fieldhouse ↗</a>
 </dialog>
 <script src="/assets/rentals.js" defer></script>
-<script src="/assets/square-payments.js?v=6" defer></script>
-<script src="/assets/booking-calendar.js?v=7" defer></script>
+<script src="/assets/square-payments.js?v=15" defer></script>
+<script src="/assets/booking-calendar.js?v=9" defer></script>
+<script src="/assets/program-registration.js?v=2" defer></script>
 {% endblock %}

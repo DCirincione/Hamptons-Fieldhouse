@@ -331,6 +331,75 @@ html { scroll-behavior: smooth; }
 .programs-empty h3 { font-size: 25px; margin: 0 0 10px; }
 .programs-empty p { max-width: 610px; font-size: 15px; margin: 0; }
 .programs-empty .status-pill { background: var(--white); border: var(--border-card); }
+.program-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
+.program-card { overflow: hidden; }
+.program-card-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-top: 4px; }
+.program-card-actions .button { margin: 0; }
+.program-card-actions .button-secondary { background: var(--white); color: var(--navy); }
+.program-card-actions .button-secondary:hover { background: var(--surface); }
+.program-art { display: grid; width: 100%; min-height: 220px; place-content: center; gap: 5px; overflow: hidden; background: var(--navy); }
+.program-art { color: white; text-align: center; background: radial-gradient(ellipse at 75% 20%, #244d7e 0, transparent 42%), linear-gradient(135deg, #062753, #001a3a); }
+.program-art span { color: white; font-family: var(--font-heading); font-size: clamp(52px, 8vw, 86px); line-height: .9; }
+.program-art small { color: #e4edf8; font-size: 11px; letter-spacing: .2em; }
+.program-content { display: grid; align-content: start; gap: 15px; padding: 27px; }
+.program-content > .eyebrow { margin: 0; }
+.program-content h3 { margin: -8px 0 0; color: var(--navy); font-family: var(--font-heading); font-size: clamp(27px, 3vw, 36px); line-height: 1.05; }
+.program-description { margin: 0; color: var(--muted); line-height: 1.65; }
+.program-audience { width: fit-content; margin: 0; padding: 7px 12px; border-radius: 999px; background: #eaf0f7; color: var(--navy); font-size: 13px; font-weight: 700; }
+.program-facts, .program-prices { padding-top: 14px; border-top: 1px solid var(--line); }
+.program-facts h4, .program-prices h4 { margin: 0 0 9px; color: var(--navy); font-size: 14px; }
+.program-facts ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.program-facts li { margin: 0; padding: 7px 10px; border: 1px solid var(--line); border-radius: 7px; color: var(--ink); font-size: 13px; }
+.program-facts li::marker { content: none; }
+.program-facts .program-activities li { border-color: transparent; background: var(--surface); }
+.program-prices > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); }
+.program-prices > div:first-of-type { border-top: 0; }
+.program-prices strong { color: var(--navy); }
+.program-notes, .program-details { margin: 0; padding: 13px 15px 13px 32px; border-radius: 8px; background: #fff7e8; color: var(--ink); font-size: 13px; line-height: 1.55; }
+.program-content > .button { width: fit-content; margin-top: 3px; }
+.program-registration-soon { margin: 0; color: var(--muted); font-size: 14px; }
+.camp-registration-success { padding: 14px 18px; border: 1px solid #2c6d50; border-radius: 10px; background: #edf8f1; color: #174d33; font-weight: 650; }
+.camp-info-dialog { position: fixed; width: min(1120px, calc(100vw - 40px)); max-width: none; max-height: 94svh; overflow-y: auto; box-sizing: border-box; padding: clamp(24px, 4vw, 44px); border: var(--border-card); border-radius: var(--radius-panel); color: var(--ink); box-shadow: var(--shadow-card); }
+.camp-info-dialog::backdrop { background: rgb(0 20 50 / 68%); }
+.camp-info-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, .82fr); align-items: start; gap: clamp(24px, 4vw, 48px); }
+.camp-info-details { display: grid; align-content: start; gap: 10px; min-width: 0; }
+.camp-info-flyer-column { position: sticky; top: 0; min-width: 0; }
+.camp-info-details > .eyebrow, .camp-info-details > h2, .camp-info-details > p { margin-block: 0; }
+.camp-info-details > h2 { margin-right: 42px; color: var(--navy); font-family: var(--font-heading); font-size: clamp(28px, 5vw, 38px); line-height: 1.05; }
+.camp-info-flyer { display: block; width: 100%; max-height: min(65svh, 720px); object-fit: contain; border-radius: 10px; background: var(--surface); }
+.camp-info-art { aspect-ratio: 3 / 4; min-height: 0; border-radius: 10px; }
+.camp-info-description { color: var(--muted); line-height: 1.65; }
+.camp-info-section { padding-top: 14px; border-top: 1px solid var(--line); }
+.camp-info-section h3 { margin: 0 0 9px; color: var(--navy); font-family: var(--font-heading); font-size: 19px; }
+.camp-info-section ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.camp-info-section li { padding: 7px 10px; border: 1px solid var(--line); border-radius: 7px; }
+.camp-info-activities li { border-color: transparent; background: var(--surface); }
+.camp-info-prices > div { display: flex; justify-content: space-between; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); }
+.camp-info-prices > div:first-of-type { border-top: 0; }
+.camp-info-prices strong { color: var(--navy); }
+.camp-info-notes li { background: #fff7e8; }
+.camp-info-body > .button { width: fit-content; }
+.camp-registration-dialog { position: fixed; width: min(680px, calc(100vw - 32px)); max-width: none; max-height: 90svh; overflow-y: auto; box-sizing: border-box; padding: clamp(24px, 5vw, 40px); border: var(--border-card); border-radius: var(--radius-panel); color: var(--ink); box-shadow: var(--shadow-card); }
+.camp-registration-dialog::backdrop { background: rgb(0 20 50 / 68%); }
+.camp-registration-dialog h2 { margin: 0 42px 24px 0; color: var(--navy); font-family: var(--font-heading); font-size: clamp(28px, 5vw, 38px); line-height: 1.05; }
+.camp-registration-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.camp-registration-fields label { display: grid; gap: 7px; color: var(--ink); font-size: 13px; font-weight: 650; }
+.camp-registration-fields input, .camp-registration-fields select { width: 100%; min-width: 0; box-sizing: border-box; padding: 11px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); color: var(--ink); font: inherit; }
+.camp-waiver-confirm { display: flex; align-items: flex-start; gap: 10px; margin: 20px 0 12px; line-height: 1.55; }
+.camp-waiver-confirm input { width: 19px; height: 19px; flex: 0 0 auto; margin: 2px 0 0; accent-color: var(--navy); }
+.camp-waiver-confirm a { color: var(--navy); text-decoration: underline; }
+.camp-registration-consent { color: var(--muted); font-size: 13px; }
+.camp-registration-dialog form > .button { width: 100%; justify-content: center; }
+#camp-registration-status { min-height: 1.4em; margin-bottom: 0; color: var(--muted); font-size: 13px; }
+.offering-flyer-field { display: grid; align-content: start; justify-items: start; gap: 8px; }
+.offering-flyer-field label { width: 100%; }
+.offering-flyer-field input[type="file"] { width: 100%; box-sizing: border-box; font: inherit; font-size: 12px; }
+.offering-flyer-field > small { color: var(--muted); font-size: 12px; font-weight: 400; }
+.staff-utility.offering-flyer-upload { min-height: 40px; padding: 9px 14px; border: 1px solid var(--navy); border-radius: 8px; background: var(--navy); color: var(--white); font-weight: 650; }
+.staff-utility.offering-flyer-upload:hover:not(:disabled) { background: var(--navy-hover); color: var(--white); }
+.offering-flyer-upload:disabled { opacity: .7; cursor: wait; }
+.offering-flyer-preview { display: block; width: min(100%, 240px); max-height: 260px; object-fit: contain; border: 1px solid var(--line); border-radius: 8px; background: var(--white); }
+.offering-flyer-status { min-height: 1.2em; color: var(--muted); }
 .party-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; }
 .party-card { border-top: 3px solid var(--red); }
 .party-card .eyebrow { color: var(--red); margin-bottom: 14px; }
@@ -361,7 +430,8 @@ html { scroll-behavior: smooth; }
   .desktop-nav { justify-content: center; gap: 18px; width: 100%; }
   .desktop-nav a { padding: 10px 0; }
   .home-hero { height: calc(100svh - 135px); }
-  .rental-grid, .party-grid { grid-template-columns: 1fr; }
+  .rental-grid, .party-grid, .program-grid { grid-template-columns: 1fr; }
+  .camp-registration-fields { grid-template-columns: 1fr; }
   .rental-jumps { gap: 9px; margin-bottom: 30px; }
   .rental-jumps a { padding: 10px 14px; gap: 12px; font-size: 12px; }
   .rental-section-heading, .programs-empty { align-items: start; flex-direction: column; }
@@ -369,6 +439,16 @@ html { scroll-behavior: smooth; }
   .party-extras dl { grid-template-columns: 1fr; }
   .party-extras dl>div { display: flex; justify-content: space-between; gap: 20px; }
   .rental-card, .party-card, .booking-preview { padding: 25px; }
+  .program-content { padding: 22px; }
+  .camp-info-dialog { width: min(680px, calc(100vw - 24px)); padding: 24px 20px; }
+  .camp-info-body { grid-template-columns: 1fr; gap: 22px; }
+  .camp-info-flyer-column { position: static; grid-row: 1; }
+  .camp-info-flyer { max-height: 55svh; }
+  .camp-registration-dialog { padding: 24px 20px; }
+  .camp-registration-admin { padding: 16px; }
+  .camp-registration-admin > summary { align-items: flex-start; flex-wrap: wrap; }
+  .camp-registration-admin > summary span { flex: 1 1 100%; margin-left: 0; }
+  .camp-registration-admin-card > summary span { flex: 1 1 100%; margin-left: 0; }
 }
 
 /* Introduction copy and facility photo. */
@@ -485,12 +565,97 @@ body.booking-modal-open { overflow: hidden; }
 .staff-utility svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
 .staff-utility-divider { height: 18px; width: 1px; margin-inline: 4px; background: var(--line); }
 .staff-section-nav button:focus-visible, .staff-utility:focus-visible, .staff-guidelines summary:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.offering-admin-list { display: grid; gap: 12px; margin-top: 18px; }
+.offering-admin-groups { display: grid; gap: 30px; margin-top: 20px; }
+.offering-admin-group-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 12px; }
+.offering-admin-group-heading h3 { margin: 0; color: var(--navy); font-family: var(--font-heading); font-size: 25px; }
+.offering-admin-empty { margin: 0; padding: 20px 22px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 14px; }
+.offering-create-panel { margin: 12px 0 16px; padding: 18px 22px; }
+.offering-create-panel > summary { color: var(--navy); cursor: pointer; font-family: var(--font-heading); font-size: 21px; }
+.offering-create-panel .offering-admin-form { border-top: 0; padding-top: 8px; margin-top: 8px; }
+.offering-create-cancel { min-height: 48px; padding: 12px 20px; border: 1px solid var(--line); border-radius: var(--radius-pill); background: var(--white); color: var(--navy); font: inherit; font-size: 12px; cursor: pointer; }
+.offering-create-cancel:hover:not(:disabled) { background: var(--surface); }
+.offering-create-cancel:disabled { opacity: .65; cursor: wait; }
+.offering-admin-card { position: relative; padding: 18px 22px; }
+.offering-admin-summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; list-style: none; cursor: pointer; }
+.offering-admin-summary::-webkit-details-marker { display: none; }
+.offering-admin-summary::after { content: '⌄'; flex: 0 0 auto; color: var(--navy); font-size: 22px; transition: transform .15s; }
+.offering-admin-card[open] .offering-admin-summary::after { transform: rotate(180deg); }
+.offering-admin-summary strong { color: var(--navy); font-family: var(--font-heading); font-size: 22px; }
+.offering-summary-flyer { display: block; width: 58px; height: 42px; flex: 0 0 58px; border: 1px solid var(--line); border-radius: 6px; object-fit: cover; background: var(--surface); }
+.offering-admin-summary > .offering-admin-meta { margin-left: auto; color: var(--muted); font-size: 13px; text-align: right; text-transform: capitalize; }
+.offering-order-controls { display: inline-flex; align-items: center; flex: 0 0 auto; gap: 6px; margin-left: 0; }
+.offering-order-arrows { display: inline-flex; flex-direction: column; gap: 2px; }
+.offering-order-button { min-height: 36px; padding: 6px 9px; border: 1px solid #b8c2cf; border-radius: 8px; background: #fff; color: var(--navy); cursor: pointer; font: inherit; }
+.offering-order-button { display: inline-grid; width: 28px; min-height: 20px; padding: 0; place-items: center; border-radius: 6px; font-size: 13px; line-height: 1; }
+.offering-order-button:disabled { cursor: default; opacity: .45; }
+.offering-admin-form { display: grid; gap: 16px; padding-top: 18px; margin-top: 16px; border-top: 1px solid var(--line); }
+.offering-admin-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 18px; }
+.offering-admin-fields label { display: grid; align-content: start; gap: 7px; margin: 0; color: var(--ink); font-size: 13px; font-weight: 650; }
+.offering-admin-fields label[hidden] { display: none; }
+.offering-admin-fields input:not([type="checkbox"]), .offering-admin-fields textarea, .offering-admin-fields select { width: 100%; min-width: 0; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); color: var(--ink); font: inherit; }
+.offering-admin-fields textarea { resize: vertical; }
+.offering-admin-fields .offering-admin-details-field { grid-column: 1 / -1; }
+.offering-admin-details-field small { color: var(--muted); font-size: 12px; font-weight: 400; }
+.offering-resource-options { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 12px 20px; padding: 14px; border: 1px solid var(--line); border-radius: 9px; }
+.offering-resource-options legend { padding: 0 6px; color: var(--ink); font-size: 13px; font-weight: 700; }
+.offering-resource-options label { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; font-weight: 500; }
+.offering-resource-options input[type="checkbox"] { width: 18px; height: 18px; margin: 0; accent-color: var(--navy); }
+.offering-resource-options small { flex: 1 1 100%; color: var(--muted); font-size: 12px; }
+.offering-admin-published { display: grid; justify-items: start; gap: 9px; width: fit-content; font-size: 14px; cursor: pointer; }
+.offering-admin-published input[type="checkbox"] { display: grid; width: 26px; height: 26px; margin: 0; padding: 0; place-content: center; appearance: none; border: 2px solid #68798e; border-radius: 7px; background: var(--white); cursor: pointer; }
+.offering-admin-published input[type="checkbox"]::after { content: ""; width: 7px; height: 13px; transform: rotate(45deg) scale(0); border: solid #fff; border-width: 0 3px 3px 0; transition: transform .12s ease; }
+.offering-admin-published input[type="checkbox"]:checked { border-color: var(--navy); box-shadow: inset 0 0 0 20px var(--navy); }
+.offering-admin-published input[type="checkbox"]:checked::after { transform: rotate(45deg) scale(1); }
+.offering-admin-feedback { min-height: 1.4em; margin: 0; color: var(--muted); font-size: 13px; }
+.offering-admin-feedback:empty { display: none; }
+.offering-admin-form .button { justify-self: start; }
+.offering-program-editor { padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.offering-program-editor > summary { color: var(--navy); font-size: 14px; font-weight: 700; cursor: pointer; }
+.offering-program-editor .offering-admin-fields { margin-top: 16px; }
+.offering-program-editor .offering-admin-fields small { color: var(--muted); font-size: 12px; font-weight: 400; }
+.offering-admin-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.offering-remove-button { min-height: 42px; padding: 8px 12px; border: 1px solid #a32b43; border-radius: 8px; background: transparent; color: #8b1e35; font: inherit; font-size: 13px; font-weight: 650; cursor: pointer; }
+.offering-remove-button:hover { background: #fff2f4; }
+.offering-remove-button:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.offering-remove-button:disabled { opacity: .6; cursor: wait; }
+.offering-admin-extras { margin-top: 22px; padding: 18px 22px; }
+.offering-admin-extras > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--navy); cursor: pointer; font-family: var(--font-heading); font-size: 21px; list-style: none; }
+.offering-admin-extras > summary::-webkit-details-marker { display: none; }
+.offering-admin-extras > summary::after { content: '⌄'; font-family: var(--font-body); font-size: 22px; }
+.offering-admin-extras[open] > summary::after { transform: rotate(180deg); }
+.offering-admin-extras > summary span { margin-left: auto; color: var(--muted); font-family: var(--font-body); font-size: 13px; }
+.offering-admin-extras > p { margin: 14px 0; color: var(--muted); font-size: 13px; }
+.camp-registration-admin { margin-top: 22px; padding: 18px 22px; }
+.camp-registration-admin > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--navy); cursor: pointer; font-family: var(--font-heading); font-size: 21px; list-style: none; }
+.camp-registration-admin > summary::-webkit-details-marker { display: none; }
+.camp-registration-admin > summary::after { content: '⌄'; font-family: var(--font-body); font-size: 22px; }
+.camp-registration-admin[open] > summary::after { transform: rotate(180deg); }
+.camp-registration-admin > summary span { margin-left: auto; color: var(--muted); font-family: var(--font-body); font-size: 13px; }
+.camp-registration-admin > p { color: var(--muted); font-size: 13px; }
+.camp-registration-admin-list { display: grid; gap: 8px; margin-top: 14px; }
+.camp-registration-admin-card { padding: 12px 14px; border: 1px solid var(--line); border-radius: 9px; }
+.camp-registration-admin-card > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; cursor: pointer; list-style: none; }
+.camp-registration-admin-card > summary::-webkit-details-marker { display: none; }
+.camp-registration-admin-card > summary strong { color: var(--navy); }
+.camp-registration-admin-card > summary span { margin-left: auto; color: var(--muted); font-size: 13px; }
+.camp-registration-admin-content { padding-top: 12px; color: var(--ink); font-size: 13px; }
+.camp-registration-admin-content p { margin: 5px 0; }
+.camp-registration-contact { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-block: 8px; }
+.camp-registration-admin-content a { color: var(--navy); text-decoration: underline; }
+.camp-registration-admin-content small { color: var(--muted); }
+.offering-extra-list { display: grid; gap: 8px; }
+.offering-extra-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(130px, .35fr) auto auto; align-items: end; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
+.offering-extra-form label { display: grid; gap: 6px; margin: 0; font-size: 13px; font-weight: 650; }
+.offering-extra-form input { width: 100%; box-sizing: border-box; padding: 9px 11px; border: 1px solid var(--line); border-radius: 8px; background: var(--white); color: var(--ink); font: inherit; }
+.offering-extra-feedback { padding: 10px 0; color: var(--muted); font-size: 12px; }
 #staff-status { font-size: 12px; margin: 14px 0 24px; color: var(--muted); }
 #staff-status:empty { display: none; }
 #staff-reservations { margin-top: 25px; }
 #staff-gallery { margin-top: 25px; }
-#staff-gallery > h2, #staff-contacts > h2 { font-size: clamp(24px, 2.5vw, 30px); margin: 0 0 10px; }
+#staff-gallery > h2, #staff-contacts > h2, #staff-offerings > h2 { font-size: clamp(24px, 2.5vw, 30px); margin: 0 0 10px; }
 #staff-contacts { margin-top: 25px; }
+#staff-offerings { margin-top: 25px; }
 .contact-admin-list { display: grid; gap: 16px; margin-top: 20px; }
 .contact-admin-card { padding: 22px; }
 .contact-message-filters { width: fit-content; margin-top: 18px; }
@@ -545,6 +710,8 @@ body.booking-modal-open { overflow: hidden; }
   .staff-toolbar { flex-wrap: wrap; gap: 10px; }
   .staff-section-nav { flex: 1 1 100%; }
   .staff-section-nav button { flex: 1; }
+  .booking-staff .staff-section-nav { flex-wrap: wrap; }
+  .booking-staff .staff-section-nav button { flex: 1 1 42%; }
   .staff-utilities { margin-left: auto; }
   .gallery-admin-card { grid-template-columns: 64px minmax(0, 1fr); }
   .gallery-card-thumbnail { width: 64px; height: 54px; }
@@ -554,6 +721,19 @@ body.booking-modal-open { overflow: hidden; }
 }
 @media (max-width: 480px) {
   .staff-section-nav button { font-size: 12px; padding: 9px 10px; }
+  .offering-admin-card { padding: 16px; }
+  .offering-admin-summary { align-items: flex-start; flex-wrap: wrap; }
+  .offering-admin-summary > .offering-admin-meta { order: 3; flex: 1 1 100%; margin-left: 0; text-align: left; }
+  .offering-order-controls { flex-wrap: wrap; }
+  .offering-admin-fields { grid-template-columns: 1fr; }
+  .offering-admin-fields .offering-admin-details-field, .offering-resource-options { grid-column: auto; }
+  .offering-admin-group-heading { align-items: flex-start; flex-direction: column; }
+  .offering-create-panel { padding: 16px; }
+  .offering-admin-extras { padding: 16px; }
+  .offering-admin-extras > summary { align-items: flex-start; flex-wrap: wrap; }
+  .offering-admin-extras > summary span { flex: 1 1 100%; margin-left: 0; }
+  .offering-extra-form { grid-template-columns: minmax(0, 1fr) auto; }
+  .offering-extra-form label { grid-column: 1 / -1; }
   .staff-heading { margin-bottom: 22px; }
   .gallery-admin-order { align-items: stretch; }
 }
@@ -642,6 +822,16 @@ body.booking-modal-open { overflow: hidden; }
 .square-payment-success .square-reserved-message { font-size: 18px; color: var(--navy); }
 .square-payment-success > .button { display: flex; justify-content: center; margin-top: 24px; }
 .square-payment-done { margin-top: 12px; }
+.square-checkout-status { position: fixed; z-index: 1200; left: 50%; bottom: 20px; transform: translateX(-50%); width: min(520px, calc(100vw - 32px)); box-sizing: border-box; padding: 16px 20px; border: 2px solid var(--navy); border-radius: 10px; background: var(--white); color: var(--ink); box-shadow: 0 8px 28px #0003; }
+.square-checkout-loading { position: fixed; inset: 0; width: 100%; height: 100%; max-width: none; max-height: none; margin: 0; padding: 24px; border: 0; box-sizing: border-box; display: grid; place-items: center; background: rgb(4 20 40 / 76%); color: var(--ink); }
+.square-checkout-loading::backdrop { background: transparent; }
+.square-checkout-loading-card { width: min(440px, 100%); box-sizing: border-box; padding: 40px 32px; border: 2px solid var(--navy); border-radius: 18px; background: var(--white); color: var(--ink); text-align: center; box-shadow: 0 18px 60px #0005; }
+.square-checkout-loading-card h1 { margin: 20px 0 8px; color: var(--navy); font-family: var(--font-heading); font-size: clamp(28px, 5vw, 38px); }
+.square-checkout-loading-card p { margin: 0; color: var(--muted); font-size: 16px; line-height: 1.6; }
+.square-checkout-spinner { display: block; width: 44px; height: 44px; margin: 0 auto; border: 5px solid var(--line); border-top-color: var(--red); border-radius: 50%; animation: square-checkout-spin .8s linear infinite; }
+@keyframes square-checkout-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .square-checkout-spinner { animation: none; border-top-color: var(--navy); } }
+@media (prefers-reduced-motion: reduce) { .offering-admin-published input[type="checkbox"]::after { transition: none; } }
 .customer-booking-details > p[role="status"]:empty { display: none; }
 .customer-cancel-button { display: inline-flex; align-items: center; justify-content: center; min-height: 40px; padding: 9px 16px; border: 1px solid #e8c9cd; border-radius: 8px; background: #fff; color: #9a2839; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; transition: background .15s, border-color .15s; }
 .customer-cancel-button:hover:not(:disabled) { background: #fff3f4; border-color: #c76c79; }

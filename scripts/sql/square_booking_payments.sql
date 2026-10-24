@@ -8,6 +8,8 @@ create table if not exists public.booking_square_payments (
   amount_cents bigint not null check (amount_cents > 0),
   location_id text not null,
   source_id text not null,
+  square_order_id text unique,
+  payment_link_url text,
   status text not null default 'processing' check (status in ('processing','completed','failed')),
   square_payment_id text unique,
   created_at timestamptz not null default now()
@@ -17,6 +19,8 @@ revoke all on public.booking_square_payments from public, anon, authenticated;
 grant all on public.booking_square_payments to service_role;
 create index if not exists booking_square_payments_owner on public.booking_square_payments(customer_user_id, status);
 alter table public.bookings add column if not exists square_attempt_id uuid references public.booking_square_payments(id);
+alter table public.booking_square_payments add column if not exists square_order_id text unique;
+alter table public.booking_square_payments add column if not exists payment_link_url text;
 alter table public.bookings drop constraint if exists bookings_payment_method_check;
 alter table public.bookings add constraint bookings_payment_method_check check (payment_method in ('venmo','cash','other','square'));
 
@@ -50,6 +54,22 @@ begin
     values(p_id,p_user_id,v_ids,v_amount,p_source,p_location) returning * into v_existing;
   update public.bookings set square_attempt_id=p_id where id=any(v_ids);
   return to_jsonb(v_existing);
+end $$;
+
+create or replace function public.attach_booking_square_link(p_id uuid, p_order_id text, p_url text)
+returns jsonb language plpgsql security definer set search_path = public as $$
+declare v_attempt public.booking_square_payments;
+begin
+  select * into v_attempt from public.booking_square_payments where id=p_id for update;
+  if not found or v_attempt.status <> 'processing' then
+    raise exception 'Unknown or completed payment' using errcode='22023';
+  end if;
+  if v_attempt.square_order_id is not null and (v_attempt.square_order_id <> p_order_id or v_attempt.payment_link_url <> p_url) then
+    raise exception 'Payment link mismatch' using errcode='22023';
+  end if;
+  update public.booking_square_payments set square_order_id=p_order_id, payment_link_url=p_url
+    where id=p_id returning * into v_attempt;
+  return to_jsonb(v_attempt);
 end $$;
 
 -- Runs only with the server key after a verified Square response, never from browser claims.
@@ -91,7 +111,9 @@ create trigger guard_booking_square_payment before update on public.bookings
   for each row execute function public.guard_booking_square_payment();
 revoke all on function public.begin_booking_square_payment(uuid,uuid,uuid[],text,text,bigint) from public,anon,authenticated;
 revoke all on function public.finish_booking_square_payment(uuid,text,boolean) from public,anon,authenticated;
+revoke all on function public.attach_booking_square_link(uuid,text,text) from public,anon,authenticated;
 revoke all on function public.guard_booking_square_payment() from public,anon,authenticated;
 grant execute on function public.begin_booking_square_payment(uuid,uuid,uuid[],text,text,bigint) to service_role;
 grant execute on function public.finish_booking_square_payment(uuid,text,boolean) to service_role;
+grant execute on function public.attach_booking_square_link(uuid,text,text) to service_role;
 commit;

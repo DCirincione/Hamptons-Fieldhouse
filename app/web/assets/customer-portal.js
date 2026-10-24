@@ -4,6 +4,8 @@
   const money = cents => new Intl.NumberFormat('en-US', {style:'currency',currency:'USD'}).format(cents/100);
   const date = value => new Date(value).toLocaleString('en-US', {timeZone:'America/New_York',dateStyle:'medium',timeStyle:'short'});
   let squareEnabled = false;
+  const returnedFromSquare = new URLSearchParams(location.search).get('booking_checkout') === 'complete';
+  if (returnedFromSquare) history.replaceState({}, '', '/account');
   window.fieldhouseSquare.settings().then(config => {
     squareEnabled = config.enabled;
     if (!squareEnabled) return;
@@ -18,6 +20,15 @@
       finally { check.disabled = false; }
     });
     $('my-bookings-refresh').after(check);
+    if (returnedFromSquare) {
+      $('my-bookings-status').textContent = 'Checking your Square payment…';
+      window.fieldhouseSquare.reconcile().then(async result => {
+        await loadBookings();
+        $('my-bookings-status').textContent = result.processing
+          ? 'Square is still processing your payment. Your dates will update automatically.'
+          : 'Payment status checked. Paid dates are approved.';
+      }).catch(error => { $('my-bookings-status').textContent = error.message; });
+    }
     if (active) loadBookings(true);
   }).catch(() => {});
   function sessionExpired() {
@@ -80,7 +91,12 @@
           const actions = document.createElement('div'); actions.className = 'customer-booking-actions';
           if (squareEnabled && booking.payment_status === 'unpaid') {
             const pay = document.createElement('button'); pay.type = 'button'; pay.className = 'button'; pay.textContent = 'Pay with Square';
-            pay.addEventListener('click', () => window.fieldhouseSquare.open([booking.id], () => loadBookings()));
+            pay.addEventListener('click', async () => {
+              pay.disabled = true;
+              try { await window.fieldhouseSquare.open([booking.id]); }
+              catch (error) { $('my-bookings-status').textContent = error.message || 'Could not open Square checkout.'; }
+              finally { pay.disabled = false; }
+            });
             actions.append(pay);
           }
           actions.append(cancel); footer.append(actions); body.append(feedback);
