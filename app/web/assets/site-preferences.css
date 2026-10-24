@@ -22,14 +22,16 @@
 :focus-visible { outline: 3px solid #c50b30; outline-offset: 4px; }
 html.a11y-large-text body { font-size: 20px; }
 .a11y-large-text :is(main, header, footer, dialog) :is(p, li, a, button, label, input, select, textarea, dt, dd, summary, time, address) {
-  font-size: max(1rem, 1em) !important;
+  font-size: max(1.25rem, 1.25em) !important;
   line-height: 1.6;
 }
-.a11y-large-text h1 { font-size: clamp(3rem, 6vw, 5.7rem) !important; line-height: 1.12; }
-.a11y-large-text h2 { font-size: clamp(2rem, 4vw, 3.25rem) !important; line-height: 1.2; }
-.a11y-large-text h3 { font-size: clamp(1.55rem, 3vw, 2.35rem) !important; line-height: 1.25; }
-.a11y-large-text h4 { font-size: 1.35rem !important; }
-.a11y-large-text :is(.eyebrow, .home-meta, .status-pill, .booking-state, .calendar-legend, .calendar-weekdays, .staff-section-description, .staff-guidelines, .contact-message-state, .merch-card-kicker, .merch-card-badge, .merch-price, .merch-view-details, .footer-bottom, .gallery-viewer-caption) { font-size: 1rem !important; }
+.a11y-large-text h1 { font-size: clamp(2.75rem, 5vw, 4.5rem) !important; line-height: 1.12; }
+.a11y-large-text h2 { font-size: clamp(1.9rem, 3.5vw, 2.75rem) !important; line-height: 1.2; }
+.a11y-large-text h3 { font-size: clamp(1.5rem, 2.5vw, 2rem) !important; line-height: 1.25; }
+.a11y-large-text h4 { font-size: 1.5rem !important; }
+.a11y-large-text :is(.eyebrow, .home-meta, .status-pill, .booking-state, .calendar-legend, .calendar-weekdays, .staff-section-description, .staff-guidelines, .contact-message-state, .merch-card-kicker, .merch-card-badge, .merch-price, .merch-view-details, .footer-bottom, .gallery-viewer-caption) { font-size: 1.25rem !important; }
+.a11y-large-text .home-meta span:last-child { font-size: 1.25rem !important; }
+.a11y-large-text .merch-card-title { font-size: clamp(1.75rem, 2.3vw, 2.2rem) !important; }
 .a11y-large-text small { font-size: .95rem !important; }
 .a11y-large-text :is(input, select, textarea) { min-height: 48px; }
 .a11y-underline-links a { text-decoration: underline !important; text-underline-offset: .2em; }
@@ -57,6 +59,28 @@ html.a11y-large-text body { font-size: 20px; }
 .a11y-high-contrast main a:not(.button), .a11y-high-contrast dialog a { color: #0000c8 !important; text-decoration: underline !important; text-decoration-thickness: 2px !important; }
 .a11y-high-contrast :is(button, .button, [role="button"]) { background: #000 !important; color: #fff !important; border: 2px solid #000 !important; box-shadow: none !important; }
 .a11y-high-contrast :is(button, .button, [role="button"]) :is(span, strong, small) { color: inherit !important; }
+.a11y-high-contrast .profile-panel { background: #fff !important; color: #000 !important; border: 2px solid #000 !important; }
+.a11y-high-contrast .profile-panel :is(p, a, button) { color: #000 !important; }
+.a11y-high-contrast .profile-panel :is(a, button):hover { background: #e5e5e5 !important; color: #000 !important; }
+.a11y-high-contrast .profile-panel button { background: #000 !important; color: #fff !important; }
+.a11y-high-contrast :is(.merch-card, .merch-card-body, .merch-card p, .merch-card-description, .merch-product-details, .merch-product-details p, .merch-cart-item p) { color: #000 !important; }
+.a11y-high-contrast .merch-card-open { color: #000 !important; }
+.a11y-high-contrast .merch-card-open :is(.merch-card-kicker, .merch-card-title, .merch-price, .merch-view-details) { color: #000 !important; }
+.a11y-high-contrast .merch-view-details > span { background: #000 !important; color: #fff !important; }
+.a11y-high-contrast .merch-card-badge { background: #fff !important; color: #000 !important; border: 2px solid #000 !important; }
+.a11y-high-contrast :is(.merch-product-details, .merch-product-details *) { color: #000 !important; }
+.a11y-high-contrast .merch-product-details :is(button, .button) { background: #000 !important; color: #fff !important; }
+.a11y-high-contrast .merch-product-details .merch-add-status { color: #000 !important; }
+.a11y-high-contrast :is(.calendar-days button[aria-pressed="true"], .booking-slots button[aria-pressed="true"], .selected-booking-dates > *) { background: #000 !important; color: #fff !important; border: 3px solid #000 !important; outline: 3px solid #ffbf00 !important; outline-offset: 2px; }
+.a11y-high-contrast .calendar-days button:not(:disabled):not([aria-pressed="true"]), .a11y-high-contrast .booking-slots button:not(:disabled):not([aria-pressed="true"]) { background: #fff !important; color: #000 !important; border: 2px solid #000 !important; }
+.a11y-high-contrast .booking-calendar button:hover:not(:disabled) { outline: 3px solid #ffbf00 !important; outline-offset: 2px; }
+.a11y-high-contrast .calendar-pending { background: #fff !important; color: #000 !important; border: 3px solid #000 !important; }
+.a11y-high-contrast .calendar-confirmed { background: #000 !important; color: #fff !important; border: 3px solid #000 !important; }
+.a11y-high-contrast #schedule-calendar .has-reservations::after { width: 8px; height: 8px; bottom: 3px; }
+.a11y-high-contrast .staff-section-nav { background: #fff !important; border: 2px solid #000 !important; }
+.a11y-high-contrast .staff-section-nav button { background: #fff !important; color: #000 !important; border: 2px solid transparent !important; }
+.a11y-high-contrast .staff-section-nav button[aria-pressed="true"] { background: #000 !important; color: #fff !important; border: 2px solid #000 !important; outline: 3px solid #ffbf00 !important; outline-offset: 2px; }
+.a11y-high-contrast .staff-section-nav button:not([aria-pressed="true"]):hover { background: #e5e5e5 !important; color: #000 !important; }
 .a11y-high-contrast :is(input, textarea, select) { background: #fff !important; color: #000 !important; border: 2px solid #000 !important; }
 .a11y-high-contrast :is(.status-pill, .booking-state, .calendar-pending, .calendar-confirmed, .contact-message-state, .merch-card-badge) { background: #fff !important; color: #000 !important; border: 2px solid #000 !important; }
 .a11y-high-contrast :is(.site-header, .site-footer) a:focus-visible { outline-color: #ffbf00 !important; }
