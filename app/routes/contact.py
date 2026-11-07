@@ -12,6 +12,7 @@ from supabase import Client
 from app.auth import require_staff
 from app.config import Settings, get_settings
 from app.dependencies import get_supabase
+from app.email_notifications import send_contact_notification
 
 router = APIRouter(tags=["contact"])
 logger = logging.getLogger(__name__)
@@ -51,7 +52,8 @@ class ContactReadState(BaseModel):
 
 
 @router.post("/contact-messages", status_code=201)
-def send_message(data: ContactMessage, db: Client = Depends(get_supabase)) -> dict[str, str]:
+def send_message(data: ContactMessage, db: Client = Depends(get_supabase),
+                 settings: Settings = Depends(get_settings)) -> dict[str, str]:
     try:
         db.table("contact_messages").insert(data.model_dump(), returning="minimal").execute()
     except (APIError, HTTPError):
@@ -60,6 +62,10 @@ def send_message(data: ContactMessage, db: Client = Depends(get_supabase)) -> di
             status_code=503,
             detail="We couldn’t save your message. Please try again or email us directly.",
         ) from None
+    send_contact_notification(
+        settings, first_name=data.first_name, last_name=data.last_name,
+        sender_email=str(data.email), phone_number=data.phone_number, message=data.message,
+    )
     return {"message": "Thanks for reaching out! Your message has been received."}
 
 

@@ -16,6 +16,7 @@ from app.auth import verified_customer
 from app.config import Settings, get_settings
 from app.routes.bookings import get_booking_db
 from app.routes.contact import ContactMessage
+from app.routes.rentals import get_rental_catalog
 
 router = APIRouter(prefix='/square', tags=['payments'])
 
@@ -128,15 +129,38 @@ def payable_rows(db, user, ids):
     return rows
 
 
+def require_booking_checkout_enabled(db, user, ids):
+    try:
+        rows = db.table('bookings').select('id,offerings(category,program_data)').eq(
+            'customer_user_id', str(user.id)).in_('id', [str(value) for value in ids]).execute().data
+    except (APIError, httpx.HTTPError):
+        raise HTTPException(503, 'Could not check this service’s checkout setting.') from None
+    if len(rows) != len(ids):
+        raise HTTPException(404, 'One or more bookings could not be found.')
+    for row in rows:
+        offering = row.get('offerings') or {}
+        category = offering.get('category')
+        enabled = (offering.get('program_data') or {}).get('square_checkout_enabled', category in ('camp', 'clinic'))
+        if category in ('field_rental', 'birthday') and not enabled:
+            raise HTTPException(403, 'Please call 631-278-4374 to arrange payment for this service.')
+
+
 @router.get('/config')
 def config(response: Response, settings: Settings = Depends(get_settings)):
     response.headers['Cache-Control'] = 'no-store'
-    return {'enabled': bool(configured(settings)), 'environment': settings.square_environment}
+    rental_services = {}
+    for offering in get_rental_catalog():
+        if offering.get('category') in ('field_rental', 'birthday'):
+            data = offering.get('program_data') or {}
+            rental_services[offering['slug']] = bool(data.get('square_checkout_enabled', False))
+    return {'enabled': bool(configured(settings)), 'environment': settings.square_environment,
+            'rental_services': rental_services}
 
 
 @router.post('/quote')
 def quote(data: Dates, user=Depends(verified_customer), db=Depends(get_booking_db), settings: Settings=Depends(get_settings)):
     require_square(settings)
+    require_booking_checkout_enabled(db, user, data.booking_ids)
     ids = [str(value) for value in data.booking_ids]
     try:
         rows = db.table('bookings').select('id,square_attempt_id').eq('customer_user_id', str(user.id)).in_('id', ids).execute().data
@@ -168,6 +192,7 @@ def quote(data: Dates, user=Depends(verified_customer), db=Depends(get_booking_d
 def hosted_checkout(data: HostedCheckout, user=Depends(verified_customer),
                     db=Depends(get_booking_db), settings: Settings=Depends(get_settings)):
     require_square(settings)
+    require_booking_checkout_enabled(db, user, data.booking_ids)
     ids = [str(value) for value in data.booking_ids]
     # Do one read to reuse a previous attempt or calculate the amount. The
     # begin-payment RPC repeats all payable/ownership/amount checks atomically.
@@ -426,6 +451,7 @@ def process_hosted(db, settings, attempt):
 @router.post('/pay')
 def pay(data: Charge, user=Depends(verified_customer), db=Depends(get_booking_db), settings: Settings=Depends(get_settings)):
     require_square(settings)
+    require_booking_checkout_enabled(db, user, data.booking_ids)
     if data.source_id.upper() in ('CASH', 'EXTERNAL'):
         raise HTTPException(422, 'Use a card through the Square payment form.')
     attempt = db_rpc(db, 'begin_booking_square_payment', {'p_id': str(data.request_id), 'p_user_id': str(user.id),

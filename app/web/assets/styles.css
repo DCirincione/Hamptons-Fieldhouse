@@ -411,12 +411,19 @@ html { scroll-behavior: smooth; }
 .party-extras dl { margin: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; align-items: center; }
 .party-extras dt { font-size: 12px; color: var(--muted); margin-bottom: 8px; }
 .party-extras dd { margin: 0; font-size: 16px; color: var(--navy); font-weight: 600; }
-.booking-preview { width: min(550px, 90vw); max-height: 85svh; padding: 36px; border: var(--border-card); box-shadow: var(--shadow-card); color: var(--ink); }
+.booking-preview { width: min(500px, 90vw); max-height: 85svh; padding: 32px; border: var(--border-card); box-shadow: var(--shadow-card); color: var(--ink); }
 .booking-preview::backdrop { background: rgb(0 20 50 / 60%); }
 .booking-preview h2 { font-size: 30px; margin-bottom: 20px; }
 .booking-preview p { font-size: 15px; }
 .booking-preview .eyebrow { font-size: 10px; color: var(--red); padding-right: 30px; }
 .booking-preview p a { color: var(--navy); text-decoration: underline; }
+.booking-preview-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin: 18px 0; }
+.booking-preview-fact { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); }
+.booking-preview-fact dt { margin-bottom: 5px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.booking-preview-fact dd { margin: 0; color: var(--navy); font-size: 15px; font-weight: 700; line-height: 1.45; }
+.booking-preview .booking-preview-prompt { margin: 0 0 16px; color: var(--muted); }
+.booking-preview-inquiry { display: block; width: fit-content; margin-top: 14px; color: var(--navy); font-size: 14px; font-weight: 700; text-decoration: underline; }
+.booking-preview > .button { display: inline-flex; align-items: center; gap: 8px; }
 .dialog-close { position: absolute; top: 14px; right: 14px; width: 40px; height: 40px; border: 0; background: var(--surface); color: var(--navy); font-size: 26px; cursor: pointer; }
 .offering-card .text-link { margin-top: 14px; }
 @media (max-width: 1000px) {
@@ -439,6 +446,7 @@ html { scroll-behavior: smooth; }
   .party-extras dl { grid-template-columns: 1fr; }
   .party-extras dl>div { display: flex; justify-content: space-between; gap: 20px; }
   .rental-card, .party-card, .booking-preview { padding: 25px; }
+  .booking-preview-facts { grid-template-columns: 1fr; }
   .program-content { padding: 22px; }
   .camp-info-dialog { width: min(680px, calc(100vw - 24px)); padding: 24px 20px; }
   .camp-info-body { grid-template-columns: 1fr; gap: 22px; }

@@ -201,7 +201,8 @@
             sessions: sessions.value.split('\n').map(line => line.trim()).filter(Boolean),
             activities: activities.value.split('\n').map(line => line.trim()).filter(Boolean),
             price_options: options,
-            notes: notes.value.split('\n').map(line => line.trim()).filter(Boolean)
+            notes: notes.value.split('\n').map(line => line.trim()).filter(Boolean),
+            square_checkout_enabled: Boolean(data.square_checkout_enabled)
           }
         };
       }
@@ -234,12 +235,14 @@
     const details = textarea((item.details || []).join('\n'), 5); details.setAttribute('aria-describedby', `offering-help-${item.slug}`);
     const program = ['camp', 'clinic', 'event'].includes(item.category);
     const bookable = !program;
-    const programData = program ? programEditor(item.program_data, item.slug) : null;
+    const programData = program ? programEditor({...item.program_data, square_checkout_enabled: item.square_checkout_enabled}, item.slug) : null;
     const price = input('number', item.price_cents == null ? '' : (item.price_cents / 100).toFixed(2), {min: 0, max: 100000, step: '0.01', required: bookable});
     const duration = input('number', item.duration_minutes || 60, {min: 15, max: 720, step: 15, required: true});
     const capacity = input('number', item.capacity, {min: 1, max: 500});
     const discount = input('number', ((item.own_food_discount_cents || 0) / 100).toFixed(2), {min: 0, max: 10000, step: '0.01'});
     const published = input('checkbox'); published.checked = item.published;
+    const squareCheckout = input('checkbox');
+    squareCheckout.checked = item.square_checkout_enabled ?? ['camp', 'clinic'].includes(item.category);
     const grid = document.createElement('div'); grid.className = 'offering-admin-fields';
     const priceLabel = label('Price (USD)', price); priceLabel.hidden = program;
     const durationLabel = label('Duration (minutes)', duration); durationLabel.hidden = program;
@@ -259,12 +262,29 @@
     const publishedTextNode = document.createElement('span');
     publishedTextNode.textContent = program ? 'Show this camp or clinic' : 'Show this service on the booking page';
     publishedLabel.append(publishedTextNode, published);
+    const squareLabel = document.createElement('label'); squareLabel.className = 'offering-admin-published offering-square-checkout';
+    squareLabel.hidden = !['field_rental', 'birthday'].includes(item.category);
+    const squareText = document.createElement('span'); squareText.textContent = 'Allow Square checkout';
+    const squareStatus = document.createElement('small'); squareStatus.setAttribute('role', 'status');
+    squareLabel.append(squareText, squareCheckout, squareStatus);
+    squareCheckout.addEventListener('change', async () => {
+      squareCheckout.disabled = true; squareStatus.textContent = 'Saving…';
+      try {
+        const result = await request(`/api/bookings/staff/offerings/${encodeURIComponent(item.slug)}/square-checkout`, {method: 'PUT', body: JSON.stringify({enabled: squareCheckout.checked})});
+        item.square_checkout_enabled = result.enabled;
+        if (item.program_data) item.program_data.square_checkout_enabled = result.enabled;
+        squareStatus.textContent = result.enabled ? 'Square checkout is on.' : 'Call to book is on.';
+        status.textContent = `${item.name}: ${squareStatus.textContent}`;
+      } catch (error) {
+        squareCheckout.checked = !squareCheckout.checked; squareStatus.textContent = error.message; status.textContent = error.message;
+      } finally { squareCheckout.disabled = false; }
+    });
     const submit = document.createElement('button'); submit.type = 'submit'; submit.className = 'button'; submit.textContent = 'Save changes';
     const remove = document.createElement('button'); remove.type = 'button'; remove.className = 'offering-remove-button'; remove.textContent = 'Remove from catalog';
     const actions = document.createElement('div'); actions.className = 'offering-admin-actions'; actions.append(submit, remove);
     const feedback = document.createElement('p'); feedback.className = 'offering-admin-feedback'; feedback.setAttribute('role', 'status'); feedback.setAttribute('aria-live', 'polite');
     if (!programData) form.append(grid);
-    form.append(publishedLabel, actions, feedback);
+    form.append(squareLabel, publishedLabel, actions, feedback);
     remove.addEventListener('click', async () => {
       if (!window.confirm(`Remove “${item.name}” from the catalog? Customers will no longer see it, and existing booking records will be kept.`)) return;
       remove.disabled = true; submit.disabled = true; feedback.textContent = 'Removing…';
@@ -289,7 +309,7 @@
         own_food_discount_cents: Math.round(Number(discount.value) * 100),
         sort_order: Number(card.dataset.sortOrder), published: published.checked,
         resources: resources ? [...resources.querySelectorAll('input:checked')].map(element => element.value) : (item.resources || []),
-        program_data: campData.data
+        program_data: {...(campData.data || {}), square_checkout_enabled: squareCheckout.checked}
       };
       submit.disabled = true; feedback.textContent = 'Saving…';
       try {

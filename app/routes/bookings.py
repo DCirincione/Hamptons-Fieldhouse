@@ -84,6 +84,7 @@ class ProgramData(BaseModel):
     activities: list[str] = Field(default_factory=list, max_length=20)
     price_options: list[ProgramPriceOption] = Field(default_factory=list, max_length=8)
     notes: list[str] = Field(default_factory=list, max_length=16)
+    square_checkout_enabled: bool | None = None
 
     @field_validator("sessions", "activities", "notes")
     @classmethod
@@ -234,7 +235,35 @@ def staff_offerings(db: Client = Depends(get_booking_db)):
         offering["own_food_discount_cents"] = rule.get("own_food_discount_cents", 0)
         offering["duration_minutes"] = rule.get("duration_minutes", offering.get("duration_minutes") or 60)
         offering["resources"] = resources_by_offering.get(offering["id"], [])
+        offering["square_checkout_enabled"] = (offering.get("program_data") or {}).get(
+            "square_checkout_enabled", offering.get("category") in ("camp", "clinic")
+        )
     return offerings
+
+
+class SquareCheckoutSetting(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool
+
+
+@router.put("/staff/offerings/{slug}/square-checkout", dependencies=[Depends(require_staff)])
+def update_square_checkout_setting(slug: Service, data: SquareCheckoutSetting, db: Client = Depends(get_booking_db)):
+    try:
+        rows = db.table("offerings").select("category,program_data").eq("slug", slug).eq("archived", False).limit(1).execute().data
+        if not rows:
+            raise HTTPException(404, "That service could not be found.")
+        if rows[0].get("category") not in ("field_rental", "birthday"):
+            raise HTTPException(422, "Square checkout settings are available for facility rentals and birthday parties.")
+        program_data = rows[0].get("program_data") or {}
+        program_data["square_checkout_enabled"] = data.enabled
+        db.table("offerings").update({"program_data": program_data}).eq("slug", slug).execute()
+        return {"slug": slug, "enabled": data.enabled, "saved": True}
+    except HTTPException:
+        raise
+    except APIError as exc:
+        raise offering_schema_error(exc) from None
+    except HTTPError:
+        raise HTTPException(503, "Could not save the Square checkout setting. Refresh and try again.") from None
 
 
 @router.put("/staff/offerings/{slug}", dependencies=[Depends(require_staff)])
@@ -305,7 +334,10 @@ def create_staff_offering(data: OfferingCreate, db: Client = Depends(get_booking
         created_rows = db.table("offerings").insert({
             "slug": data.slug, "category": data.category, "name": data.name,
             "description": data.description, "details": data.details,
-            "program_data": data.program_data.model_dump(),
+            "program_data": {
+                **data.program_data.model_dump(exclude_none=True),
+                "square_checkout_enabled": data.program_data.square_checkout_enabled if data.program_data.square_checkout_enabled is not None else data.category in ("camp", "clinic"),
+            },
             "price_cents": data.price_cents if data.category in ("field_rental", "birthday") else None,
             "duration_minutes": data.duration_minutes, "capacity": data.capacity,
             "published": data.published, "sort_order": data.sort_order, "archived": False,
@@ -435,6 +467,15 @@ def reserve(data: Reservation, user=Depends(verified_customer), db: Client = Dep
         raise HTTPException(422, "Choose additional dates on or after your first booking, within the booking window.")
     dates.sort()
     count = len(dates)
+    try:
+        offering_rows = db.table("offerings").select("category,program_data").eq("slug", data.service).limit(1).execute().data
+    except (APIError, HTTPError):
+        raise HTTPException(503, "Could not check the service booking setting. Please call 631-278-4374.") from None
+    if offering_rows:
+        offering = offering_rows[0]
+        enabled = (offering.get("program_data") or {}).get("square_checkout_enabled", offering.get("category") in ("camp", "clinic"))
+        if offering.get("category") in ("field_rental", "birthday") and not enabled:
+            raise HTTPException(403, "Please call 631-278-4374 to book this service.")
     payload = data.model_dump(mode="json", exclude={"additional_dates"})
     # Existing reservation RPCs accept manual methods. A Square choice still
     # creates unpaid pending holds; only the verified payment RPC approves them.

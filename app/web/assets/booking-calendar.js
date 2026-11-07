@@ -5,13 +5,18 @@
   const service = $('booking-service');
   const form = $('reservation-form');
   const fields = form.elements;
-  window.fieldhouseSquare.settings().then(config => {
-    $('square-booking-option').hidden = !config.enabled;
-    $('square-booking-option').disabled = !config.enabled;
-    if (config.enabled) fields.payment_method.value = 'square';
+  let squareConfig = null;
+  function updateSquareOption() {
+    if (!squareConfig) return;
+    const serviceEnabled = squareConfig.enabled && squareConfig.rental_services?.[service.value] === true;
+    $('square-booking-option').hidden = !serviceEnabled;
+    $('square-booking-option').disabled = !serviceEnabled;
+    if (serviceEnabled) fields.payment_method.value = 'square';
     else if (fields.payment_method.value === 'square') fields.payment_method.value = 'venmo';
     total();
-  }).catch(() => {});
+  }
+  window.fieldhouseSquare.settings().then(config => { squareConfig = config; updateSquareOption(); }).catch(() => {});
+  service.addEventListener('change', updateSquareOption);
   let customer = null;
   function updateCustomer(user) {
     customer = user;

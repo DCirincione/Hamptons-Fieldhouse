@@ -1,4 +1,4 @@
-# Square-hosted booking checkout (Sandbox only)
+# Square-hosted booking checkout
 
 Bookings paid successfully through Square are approved without staff review. A multi-date
 request creates separate pending holds; paying for one session selects the earliest date,
@@ -14,14 +14,19 @@ payments block these manual updates; completed Square payments cannot be overwri
 The app reads `.env`, not `.env.local`. Configure:
 
 ```dotenv
-SQUARE_ENVIRONMENT=sandbox
-SQUARE_SANDBOX_ACCESS_TOKEN=...
-SQUARE_SANDBOX_LOCATION_ID=...
+SQUARE_ENVIRONMENT=production
+SQUARE_PRODUCTION_ACCESS_TOKEN=...
+SQUARE_PRODUCTION_LOCATION_ID=...
 SQUARE_BOOKING_PAYMENTS_ENABLED=true
 SITE_URL=https://YOUR_HOST
+SQUARE_WEBHOOK_URL=https://YOUR_HOST/api/square/webhook
 ```
 
-Set `SITE_URL` to the public HTTPS origin so Square can return customers to My Bookings.
+Set `SITE_URL` to the canonical public HTTPS origin so account confirmation links and
+Square checkout returns use the production domain. In Vercel, set `CORS_ORIGINS` to a
+JSON array containing the exact production origin, for example
+`["https://www.example.com"]`. Set `SQUARE_WEBHOOK_URL` to the exact webhook
+subscription URL and configure the matching production signature key.
 
 Apply `scripts/sql/square_booking_payments.sql` and then
 `scripts/sql/square_hosted_booking_checkout.sql` before enabling checkout. Both scripts are
@@ -31,10 +36,11 @@ booking attempt. The private ledger and transactional functions prevent overlapp
 payments and changes while a payment outcome is unresolved. Square access tokens stay on
 the server.
 
-Restart the development server after changing `.env`. Square Sandbox uses test cards and
-no real money, but successful tests **do mark the selected database bookings paid and approved**.
-Use test reservations. Production is deliberately unsupported: changing the environment to
-`production` disables checkout. Do not expose Sandbox checkout to real customers.
+Restart the development server after changing `.env`; redeploy after changing Vercel
+environment variables. Sandbox uses test cards and no real money, but successful tests
+**do mark the selected database bookings paid and approved**. Use test reservations.
+Production uses the production credentials and webhook subscription configured for the
+Square application.
 
 ## Hosted checkout and verification
 
@@ -63,11 +69,11 @@ mark a cancelled booking refunded. The UI tells customers to arrange refunds wit
 Before public deployment, configure a reachable HTTPS webhook so completion reconciles if
 the browser closes or the response is interrupted:
 
-1. Set `SQUARE_WEBHOOK_URL=https://YOUR_HOST/api/square/webhook` to the **exact** subscription URL.
-2. In the Square app's Sandbox Webhooks → Subscriptions, subscribe to `payment.created`
-   and `payment.updated` at that URL.
-3. Set `SQUARE_SANDBOX_WEBHOOK_SIGNATURE_KEY` to the subscription signature key.
-4. Restart the server and send a Square test event.
+1. Set `SQUARE_WEBHOOK_URL=https://YOUR_HOST/api/square/webhook` to the **exact** production subscription URL.
+2. In the Square app's Production Webhooks → Subscriptions, subscribe to
+   `payment.created` and `payment.updated` at that URL.
+3. Set `SQUARE_PRODUCTION_WEBHOOK_SIGNATURE_KEY` to that subscription's signature key.
+4. Redeploy and send a Square test event to confirm delivery.
 
 The handler validates HMAC-SHA256 over the exact URL plus raw body with constant-time
 comparison, then fetches the payment from Square instead of trusting event payment fields.

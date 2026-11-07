@@ -62,9 +62,11 @@ project key; authenticated user tokens are not automatically forwarded to Supaba
 2. Use the repository root as the Root Directory and the FastAPI framework preset.
    Keep the default build settings. Vercel discovers `app/main.py` and installs
    `requirements.txt`; no custom routing configuration is needed.
-3. Add `SUPABASE_URL`, `SUPABASE_KEY`, and `CORS_ORIGINS` in Vercel's environment
-   settings. Set `CORS_ORIGINS` to a JSON array containing your frontend's exact
-   origin, such as `["https://your-site.com"]`.
+3. Add `SUPABASE_URL`, `SUPABASE_KEY`, `SITE_URL`, and `CORS_ORIGINS` in Vercel's
+   production environment settings. Set `SITE_URL` to the canonical HTTPS origin
+   and `CORS_ORIGINS` to a JSON array of exact allowed origins. Set
+   `SQUARE_WEBHOOK_URL` to `SITE_URL + "/api/square/webhook"` and update the
+   matching Square webhook subscription URL and signature key.
 4. Deploy, then visit `/docs` and `/api/health` on the deployment URL.
 
 Environment files are ignored by Git. Vercel needs the variables set in its dashboard;
@@ -79,6 +81,13 @@ and [Supabase Python client](https://supabase.com/docs/reference/python/initiali
 `/api/contact-messages`. Your existing `SUPABASE_URL` and publishable
 `SUPABASE_KEY` are used server-side. Messages can be viewed in the Supabase dashboard;
 public users cannot read them. The form reports success only after storage succeeds.
+
+Optional email alerts send new contact form messages to
+`EMAIL_NOTIFICATION_TO` (defaults to `hamptonsfieldhouse@gmail.com`). Configure
+`SMTP_HOST=smtp.gmail.com`, `SMTP_PORT=587`, `SMTP_USERNAME`, and `SMTP_PASSWORD` in
+the server environment. For Gmail, use a Google App Password for `SMTP_PASSWORD`,
+not the account's regular password. Without SMTP credentials, messages continue to
+be stored in Supabase and no email alert is sent.
 
 ### Shared content cards
 

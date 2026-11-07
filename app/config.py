@@ -32,6 +32,11 @@ class Settings(BaseSettings):
     square_production_access_token: SecretStr = SecretStr("")
     square_production_application_id: str = ""
     square_production_location_id: str = ""
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: SecretStr = SecretStr("")
+    email_notification_to: str = "hamptonsfieldhouse@gmail.com"
     site_url: str = "http://localhost:8000"
     cors_origins: list[str] = ["http://localhost:3000", "http://localhost:5173"]
 
