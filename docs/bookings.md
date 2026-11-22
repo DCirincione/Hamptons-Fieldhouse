@@ -97,6 +97,13 @@ so concurrent reservations and hours changes serialize. Verify those contracts
 against the externally managed schema before applying.
 Pending and confirmed reservations both occupy resource slots.
 
+For camp and clinic participant limits, apply
+`scripts/sql/camp_registration_capacity.sql` before deploying the matching app
+version. The existing `offerings.capacity` column stores the limit. It applies
+separately to each session; paid and awaiting-payment registrations reserve a
+seat, and failed payments do not. The database function locks the offering row
+while reserving a seat so concurrent registrations cannot exceed the limit.
+
 Configure server-only environment variables:
 
 - `SUPABASE_URL`: the project URL (already used by the catalog).

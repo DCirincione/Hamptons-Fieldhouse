@@ -41,6 +41,12 @@
   <p id="schedule-status" role="status"></p>
 
 </section>
+<section class="card camp-enrollment-panel" aria-labelledby="camp-enrollment-title">
+  <div class="camp-enrollment-heading"><h2 id="camp-enrollment-title">Camp &amp; clinic registrations</h2><button class="staff-utility" type="button" id="camp-enrollment-refresh">Refresh registrations</button></div>
+  <p>Open a program to review participant and guardian details, session choices, and payment status. The participant limit applies separately to each session; paid and awaiting-payment registrations reserve a seat.</p>
+  <p id="camp-enrollment-status" role="status" aria-live="polite">Loading camp registrations…</p>
+  <div id="camp-enrollment-list" class="camp-enrollment-list"></div>
+</section>
 <dialog class="card staff-block-card" id="block-dialog" aria-labelledby="block-title">
   <button type="button" class="dialog-close" id="block-close" aria-label="Close block time">×</button>
   <h2 id="block-title">Block Time</h2>

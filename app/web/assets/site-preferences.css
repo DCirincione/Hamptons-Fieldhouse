@@ -87,8 +87,8 @@ html.a11y-large-text body { font-size: 20px; }
 .a11y-high-contrast :focus-visible { outline: 4px solid #ffbf00 !important; outline-offset: 4px !important; }
 .a11y-high-contrast img { outline: 1px solid #000; }
 .a11y-high-contrast .merch-image img { outline: none !important; }
-.a11y-high-contrast :is(.program-card, .camp-info-dialog, .camp-registration-dialog, .camp-registration-admin-card) { background: #fff !important; color: #000 !important; border: 2px solid #000 !important; }
-.a11y-high-contrast :is(.program-card, .camp-info-dialog, .camp-registration-dialog, .camp-registration-admin-card) :is(h2, h3, h4, p, li, strong, span, label, small) { color: #000 !important; }
+.a11y-high-contrast :is(.program-card, .camp-info-dialog, .camp-registration-dialog, .camp-enrollment-program, .camp-enrollment-session, .camp-enrollment-registration) { background: #fff !important; color: #000 !important; border: 2px solid #000 !important; }
+.a11y-high-contrast :is(.program-card, .camp-info-dialog, .camp-registration-dialog, .camp-enrollment-program, .camp-enrollment-session, .camp-enrollment-registration) :is(h2, h3, h4, p, li, strong, span, label, small) { color: #000 !important; }
 .a11y-high-contrast :is(.program-audience, .program-facts li, .program-notes, .program-details) { background: #fff !important; border: 1px solid #000 !important; }
 .a11y-high-contrast .program-art { background: #000 !important; color: #fff !important; }
 .a11y-high-contrast .program-art :is(span, small) { color: #fff !important; }

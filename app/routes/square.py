@@ -298,24 +298,21 @@ def camp_checkout(data: CampRegistration, db=Depends(get_booking_db), settings: 
             if not same:
                 raise HTTPException(409, 'This registration request has already been used. Refresh the form and try again.')
         else:
-            row = {
-                'id': str(data.request_id), 'request_id': str(data.request_id), 'offering_id': offering['id'],
-                'session_label': data.session_label, 'price_label': data.price_label, 'amount_cents': amount_cents,
-                'guardian_name': data.guardian_name, 'guardian_email': str(data.guardian_email),
-                'guardian_phone': data.guardian_phone, 'participant_name': data.participant_name,
-                'participant_grade': data.participant_grade, 'waiver_confirmed': True,
-            }
             try:
-                db.table('camp_registrations').insert(row).execute()
+                db.rpc('reserve_camp_registration', {
+                    'p_id': str(data.request_id), 'p_offering_id': offering['id'],
+                    'p_session_label': data.session_label, 'p_price_label': data.price_label,
+                    'p_amount_cents': amount_cents, 'p_guardian_name': data.guardian_name,
+                    'p_guardian_email': str(data.guardian_email), 'p_guardian_phone': data.guardian_phone,
+                    'p_participant_name': data.participant_name, 'p_participant_grade': data.participant_grade,
+                }).execute()
             except APIError as exc:
-                if exc.code in ('PGRST205', 'PGRST204', '42P01', '42703'):
-                    raise HTTPException(503, 'Camp registration needs a database update. Rerun scripts/sql/dynamic_booking_offerings.sql in Supabase.') from None
-                if exc.code not in ('23505', '409'):
-                    raise
-                existing = db.table('camp_registrations').select('*').eq('request_id', str(data.request_id)).limit(1).execute().data
-                if not existing:
-                    raise
-                registration = existing[0]
+                detail = getattr(exc, 'message', '') or str(exc)
+                if exc.code == 'P0001' and 'session is full' in detail.casefold():
+                    raise HTTPException(409, 'That camp or clinic session is full. Choose another session or contact the Fieldhouse.') from None
+                if exc.code in ('PGRST202', 'PGRST205', 'PGRST204', '42P01', '42703'):
+                    raise HTTPException(503, 'Camp capacity needs a database update. Run scripts/sql/camp_registration_capacity.sql in Supabase.') from None
+                raise
         registration = db.table('camp_registrations').select('*').eq('request_id', str(data.request_id)).limit(1).execute().data[0]
         same = (registration['offering_id'] == offering['id']
                 and registration['session_label'] == data.session_label

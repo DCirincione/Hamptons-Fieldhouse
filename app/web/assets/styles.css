@@ -453,10 +453,10 @@ html { scroll-behavior: smooth; }
   .camp-info-flyer-column { position: static; grid-row: 1; }
   .camp-info-flyer { max-height: 55svh; }
   .camp-registration-dialog { padding: 24px 20px; }
-  .camp-registration-admin { padding: 16px; }
-  .camp-registration-admin > summary { align-items: flex-start; flex-wrap: wrap; }
-  .camp-registration-admin > summary span { flex: 1 1 100%; margin-left: 0; }
-  .camp-registration-admin-card > summary span { flex: 1 1 100%; margin-left: 0; }
+  .camp-enrollment-panel { padding: 16px; }
+  .camp-enrollment-category { margin-left: 0; }
+  .camp-enrollment-session-heading strong { flex: 1 1 100%; }
+  .camp-enrollment-registration > summary { align-items: flex-start; }
 }
 
 /* Introduction copy and facility photo. */
@@ -634,24 +634,37 @@ body.booking-modal-open { overflow: hidden; }
 .offering-admin-extras[open] > summary::after { transform: rotate(180deg); }
 .offering-admin-extras > summary span { margin-left: auto; color: var(--muted); font-family: var(--font-body); font-size: 13px; }
 .offering-admin-extras > p { margin: 14px 0; color: var(--muted); font-size: 13px; }
-.camp-registration-admin { margin-top: 22px; padding: 18px 22px; }
-.camp-registration-admin > summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; color: var(--navy); cursor: pointer; font-family: var(--font-heading); font-size: 21px; list-style: none; }
-.camp-registration-admin > summary::-webkit-details-marker { display: none; }
-.camp-registration-admin > summary::after { content: '⌄'; font-family: var(--font-body); font-size: 22px; }
-.camp-registration-admin[open] > summary::after { transform: rotate(180deg); }
-.camp-registration-admin > summary span { margin-left: auto; color: var(--muted); font-family: var(--font-body); font-size: 13px; }
-.camp-registration-admin > p { color: var(--muted); font-size: 13px; }
-.camp-registration-admin-list { display: grid; gap: 8px; margin-top: 14px; }
-.camp-registration-admin-card { padding: 12px 14px; border: 1px solid var(--line); border-radius: 9px; }
-.camp-registration-admin-card > summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; cursor: pointer; list-style: none; }
-.camp-registration-admin-card > summary::-webkit-details-marker { display: none; }
-.camp-registration-admin-card > summary strong { color: var(--navy); }
-.camp-registration-admin-card > summary span { margin-left: auto; color: var(--muted); font-size: 13px; }
-.camp-registration-admin-content { padding-top: 12px; color: var(--ink); font-size: 13px; }
-.camp-registration-admin-content p { margin: 5px 0; }
-.camp-registration-contact { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-block: 8px; }
-.camp-registration-admin-content a { color: var(--navy); text-decoration: underline; }
-.camp-registration-admin-content small { color: var(--muted); }
+.camp-enrollment-panel { margin-top: 22px; }
+.camp-enrollment-heading { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
+.camp-enrollment-heading h2 { margin: 0; }
+#camp-enrollment-status { color: var(--muted); font-size: 13px; }
+.camp-enrollment-list { display: grid; gap: 10px; }
+.camp-enrollment-program { padding: 14px 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--white); }
+.camp-enrollment-program > summary { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px 14px; color: var(--navy); cursor: pointer; list-style: none; }
+.camp-enrollment-program > summary::-webkit-details-marker { display: none; }
+.camp-enrollment-program > summary strong { font-family: var(--font-heading); font-size: 20px; }
+.camp-enrollment-category { margin-left: auto; color: var(--muted); font-size: 13px; }
+.camp-enrollment-program-content { display: grid; gap: 12px; padding-top: 14px; }
+.camp-enrollment-program-content > p { margin: 0; color: var(--muted); }
+.camp-enrollment-session { padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
+.camp-enrollment-session-heading { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px 14px; }
+.camp-enrollment-session-heading h4 { margin: 0; color: var(--navy); font-size: 16px; }
+.camp-enrollment-session-heading strong { color: var(--ink); font-size: 13px; }
+.camp-enrollment-payment-summary { margin: 5px 0 10px; color: var(--muted); font-size: 12px; }
+.camp-enrollment-empty { margin: 8px 0 0; color: var(--muted); font-size: 13px; }
+.camp-enrollment-registration { margin-top: 8px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 7px; background: var(--white); }
+.camp-enrollment-registration > summary { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 8px 14px; cursor: pointer; list-style: none; }
+.camp-enrollment-registration > summary::-webkit-details-marker { display: none; }
+.camp-enrollment-registration > summary strong { color: var(--navy); }
+.camp-enrollment-payment { font-size: 12px; font-weight: 700; }
+.camp-enrollment-payment-paid { color: #17603a; }
+.camp-enrollment-payment-awaiting_payment { color: #805000; }
+.camp-enrollment-payment-payment_failed { color: #9a2433; }
+.camp-enrollment-registration-details { padding-top: 8px; color: var(--ink); font-size: 13px; }
+.camp-enrollment-registration-details p { margin: 5px 0; }
+.camp-enrollment-contact { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.camp-enrollment-contact a { color: var(--navy); text-decoration: underline; }
+.camp-enrollment-registration-details small { color: var(--muted); }
 .offering-extra-list { display: grid; gap: 8px; }
 .offering-extra-form { display: grid; grid-template-columns: minmax(0, 1fr) minmax(130px, .35fr) auto auto; align-items: end; gap: 12px; padding: 12px 0; border-top: 1px solid var(--line); }
 .offering-extra-form label { display: grid; gap: 6px; margin: 0; font-size: 13px; font-weight: 650; }

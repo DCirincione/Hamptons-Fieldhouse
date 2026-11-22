@@ -31,7 +31,7 @@
     ++generation;
     $('staff-controls').hidden = false;
     showSection(activeSection);
-    await Promise.allSettled([loadBookings(), loadSchedule(), loadHours()]);
+    await Promise.allSettled([loadBookings(), loadSchedule(), loadHours(), loadCampRegistrations()]);
   }
   async function loadBookings() {
     const current = ++bookingsGeneration;
@@ -54,6 +54,102 @@
       $('day-bookings-status').textContent = 'Bookings could not be loaded. Use Refresh to retry.';
     }
   }
+  const campRegistrationDate = value => value
+    ? new Date(value).toLocaleString('en-US', {timeZone: 'America/New_York', dateStyle: 'medium', timeStyle: 'short'})
+    : 'Registration date unavailable';
+  const campPaymentLabels = {paid: 'Paid', awaiting_payment: 'Awaiting payment', payment_failed: 'Payment failed'};
+  function campEnrollmentCard(program, registrations) {
+    const card = document.createElement('details');
+    card.className = 'camp-enrollment-program';
+    card.dataset.slug = program.slug;
+    const heading = document.createElement('summary');
+    const title = document.createElement('strong'); title.textContent = program.name;
+    const category = document.createElement('span'); category.className = 'camp-enrollment-category';
+    category.textContent = program.category === 'clinic' ? 'Clinic' : 'Camp';
+    heading.append(title, category); card.append(heading);
+
+    const programRegistrations = registrations.filter(registration => registration.offerings?.slug === program.slug);
+    const sessions = [...new Set([...(program.program_data?.sessions || []), ...programRegistrations.map(registration => registration.session_label)])];
+    const content = document.createElement('div'); content.className = 'camp-enrollment-program-content';
+    if (!sessions.length) {
+      const noSessions = document.createElement('p'); noSessions.textContent = 'No session dates are currently listed for this program.';
+      content.append(noSessions);
+    }
+    sessions.forEach(session => {
+      const sessionRows = programRegistrations.filter(registration => registration.session_label === session);
+      const reserved = sessionRows.filter(registration => ['awaiting_payment', 'paid'].includes(registration.status));
+      const paidCount = sessionRows.filter(registration => registration.status === 'paid').length;
+      const awaitingCount = sessionRows.filter(registration => registration.status === 'awaiting_payment').length;
+      const failedCount = sessionRows.filter(registration => registration.status === 'payment_failed').length;
+      const sessionCard = document.createElement('section'); sessionCard.className = 'camp-enrollment-session';
+      const sessionHeading = document.createElement('div'); sessionHeading.className = 'camp-enrollment-session-heading';
+      const sessionTitle = document.createElement('h4'); sessionTitle.textContent = session;
+      const capacity = document.createElement('strong');
+      capacity.textContent = program.capacity == null
+        ? `${reserved.length} seat${reserved.length === 1 ? '' : 's'} reserved · no limit set`
+        : `${reserved.length} / ${program.capacity} seats reserved`;
+      sessionHeading.append(sessionTitle, capacity); sessionCard.append(sessionHeading);
+      const breakdown = document.createElement('p'); breakdown.className = 'camp-enrollment-payment-summary';
+      breakdown.textContent = `${paidCount} paid · ${awaitingCount} awaiting payment${failedCount ? ` · ${failedCount} payment failed` : ''}`;
+      sessionCard.append(breakdown);
+      if (!sessionRows.length) {
+        const empty = document.createElement('p'); empty.className = 'camp-enrollment-empty'; empty.textContent = 'No registrations for this session yet.';
+        sessionCard.append(empty);
+      }
+      sessionRows.forEach(registration => {
+        const row = document.createElement('details'); row.className = 'camp-enrollment-registration';
+        const rowHeading = document.createElement('summary');
+        const participantName = document.createElement('strong'); participantName.textContent = registration.participant_name;
+        const state = document.createElement('span');
+        state.className = `camp-enrollment-payment camp-enrollment-payment-${registration.status}`;
+        state.textContent = campPaymentLabels[registration.status] || registration.status;
+        rowHeading.append(participantName, state); row.append(rowHeading);
+        const details = document.createElement('div'); details.className = 'camp-enrollment-registration-details';
+        const participant = document.createElement('p'); participant.textContent = `Grade: ${registration.participant_grade} · Option: ${registration.price_label}`;
+        const amount = document.createElement('p'); amount.textContent = `Amount: ${money(registration.amount_cents)}`;
+        const guardian = document.createElement('p'); guardian.textContent = `Parent / guardian: ${registration.guardian_name}`;
+        const contact = document.createElement('p'); contact.className = 'camp-enrollment-contact';
+        const email = document.createElement('a'); email.href = `mailto:${registration.guardian_email}`; email.textContent = registration.guardian_email;
+        const phone = document.createElement('a'); phone.href = `tel:${registration.guardian_phone}`; phone.textContent = registration.guardian_phone;
+        contact.append(email, phone);
+        const waiver = document.createElement('p'); waiver.textContent = 'Waiver confirmation: received';
+        const created = document.createElement('small'); created.textContent = `Registered ${campRegistrationDate(registration.created_at)} Eastern`;
+        details.append(participant, amount, guardian, contact, waiver, created); row.append(details); sessionCard.append(row);
+      });
+      content.append(sessionCard);
+    });
+    card.append(content);
+    return card;
+  }
+  async function loadCampRegistrations() {
+    const status = $('camp-enrollment-status'), list = $('camp-enrollment-list');
+    if (!status || !list) return;
+    const openPrograms = new Set([...list.querySelectorAll('.camp-enrollment-program[open]')].map(card => card.dataset.slug));
+    status.textContent = 'Loading camps, clinics, and registrations…';
+    try {
+      const [offerings, registrations] = await Promise.all([call('/offerings'), call('/camp-registrations')]);
+      const programs = offerings.filter(item => ['camp', 'clinic'].includes(item.category));
+      const knownPrograms = new Set(programs.map(program => program.slug));
+      registrations.forEach(registration => {
+        const archivedProgram = registration.offerings;
+        if (archivedProgram?.slug && ['camp', 'clinic'].includes(archivedProgram.category) && !knownPrograms.has(archivedProgram.slug)) {
+          programs.push(archivedProgram);
+          knownPrograms.add(archivedProgram.slug);
+        }
+      });
+      list.replaceChildren(...programs.map(program => {
+        const card = campEnrollmentCard(program, registrations);
+        card.open = openPrograms.has(program.slug);
+        return card;
+      }));
+      status.textContent = programs.length
+        ? `${programs.length} camp${programs.length === 1 ? '' : 's'} or clinic${programs.length === 1 ? '' : 's'} · registration records include paid, awaiting payment, and failed attempts.`
+        : 'There are no camps or clinics in the service catalog.';
+    } catch (error) {
+      status.textContent = error.message || 'Could not load camp and clinic registrations.';
+    }
+  }
+  $('camp-enrollment-refresh').addEventListener('click', loadCampRegistrations);
   function renderBookings() {
     $('staff-bookings').replaceChildren();
     if (!bookings) { $('day-bookings-status').textContent = 'Loading bookings…'; return; }

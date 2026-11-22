@@ -404,9 +404,16 @@ def upload_program_flyer(slug: Service, data: FlyerUpload, db: Client = Depends(
 @router.get("/staff/camp-registrations", dependencies=[Depends(require_staff)])
 def staff_camp_registrations(db: Client = Depends(get_booking_db)):
     try:
-        return db.table("camp_registrations").select(
-            "id,created_at,session_label,price_label,amount_cents,guardian_name,guardian_email,guardian_phone,participant_name,participant_grade,status,offerings(name)"
-        ).order("created_at", desc=True).limit(200).execute().data
+        registrations = []
+        offset = 0
+        while True:
+            page = db.table("camp_registrations").select(
+                "id,created_at,session_label,price_label,amount_cents,guardian_name,guardian_email,guardian_phone,participant_name,participant_grade,status,offerings(slug,name,category,capacity)"
+            ).order("created_at", desc=True).range(offset, offset + 499).execute().data
+            registrations.extend(page)
+            if len(page) < 500:
+                return registrations
+            offset += 500
     except APIError as exc:
         raise offering_schema_error(exc) from None
     except HTTPError:

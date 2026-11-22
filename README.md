@@ -22,6 +22,9 @@ Keep row level security enabled and add policies for the data your API should ac
 Email/password accounts are available at `/account`. Staff access requires a
 confirmed account with an admin role; see [account and booking setup](docs/bookings.md).
 
+For owner-facing instructions on managing the schedule, services, bookings, contact
+messages, and About Us gallery, see the [Hamptons Fieldhouse owner manual](docs/owner-user-manual.md).
+
 ## Website styles and pages
 
 Home (`/`) and About Us (`/about`) extend `app/web/templates/base.html`, which

@@ -246,7 +246,9 @@
     const grid = document.createElement('div'); grid.className = 'offering-admin-fields';
     const priceLabel = label('Price (USD)', price); priceLabel.hidden = program;
     const durationLabel = label('Duration (minutes)', duration); durationLabel.hidden = program;
-    const capacityLabel = label('Included capacity', capacity); capacityLabel.hidden = item.category === 'field_rental' || program;
+    const capacityLabel = label(program ? 'Participant limit per session (leave blank for no limit)' : 'Included capacity', capacity);
+    capacityLabel.hidden = item.category === 'field_rental';
+    if (program) capacity.placeholder = 'No limit';
     const discountLabel = label('Bring-your-own-food discount (USD)', discount); discountLabel.hidden = item.category !== 'birthday';
     grid.append(label('Service Name', name), priceLabel, label('Description', description), durationLabel,
       capacityLabel, discountLabel, label('Details (one item per line)', details));
@@ -344,26 +346,6 @@
     });
     return form;
   }
-  function renderRegistration(item) {
-    const card = document.createElement('details'); card.className = 'camp-registration-admin-card';
-    const summary = document.createElement('summary');
-    const primary = document.createElement('strong'); primary.textContent = item.participant_name;
-    const meta = document.createElement('span');
-    const statusText = item.status === 'paid' ? 'Paid' : item.status === 'payment_failed' ? 'Payment failed' : 'Awaiting payment';
-    const amount = new Intl.NumberFormat('en-US', {style: 'currency', currency: 'USD'}).format(item.amount_cents / 100);
-    meta.textContent = `${item.offerings?.name || 'Camp'} · ${item.session_label} · ${statusText} · ${amount}`;
-    summary.append(primary, meta);
-    const content = document.createElement('div'); content.className = 'camp-registration-admin-content';
-    const participant = document.createElement('p'); participant.textContent = `Grade: ${item.participant_grade} · Option: ${item.price_label}`;
-    const guardian = document.createElement('p'); guardian.textContent = `Parent / guardian: ${item.guardian_name}`;
-    const contact = document.createElement('div'); contact.className = 'camp-registration-contact';
-    const email = document.createElement('a'); email.href = `mailto:${item.guardian_email}`; email.textContent = item.guardian_email;
-    const phone = document.createElement('a'); phone.href = `tel:${item.guardian_phone}`; phone.textContent = item.guardian_phone;
-    contact.append(email, phone);
-    const date = document.createElement('small'); date.textContent = item.created_at ? `Registered ${new Date(item.created_at).toLocaleString()}` : '';
-    content.append(participant, guardian, contact, date); card.append(summary, content);
-    return card;
-  }
   function appendCreateForm(category, button) {
     const group = button.closest('.offering-admin-group');
     let panel = group.querySelector('.offering-create-panel');
@@ -378,6 +360,7 @@
     const isRental = category === 'field_rental';
     const isBirthday = category === 'birthday';
     const isBookable = isRental || isBirthday;
+    const isProgram = !isBookable;
     const programData = isBookable ? null : programEditor({});
     const price = input('number', '', {min: 0, max: 100000, step: '0.01', required: isBookable});
     const duration = input('number', isBirthday ? 90 : 60, {min: isBirthday ? 75 : 15, max: 720, step: 15, required: true});
@@ -393,7 +376,9 @@
     const grid = document.createElement('div'); grid.className = 'offering-admin-fields';
     const priceLabel = label('Price (USD)', price); priceLabel.hidden = !isBookable;
     const durationLabel = label('Duration (minutes)', duration); durationLabel.hidden = !isBookable;
-    const capacityLabel = label('Included capacity', capacity); capacityLabel.hidden = !isBirthday;
+    const capacityLabel = label(isProgram ? 'Participant limit per session (leave blank for no limit)' : 'Included capacity', capacity);
+    capacityLabel.hidden = !isBirthday && !isProgram;
+    if (isProgram) capacity.placeholder = 'No limit';
     const discountLabel = label('Bring-your-own-food discount (USD)', discount); discountLabel.hidden = !isBirthday;
     if (typeof categoryInput !== 'string') grid.append(label('Program type', categoryInput));
     const nameLabel = label('Service Name', name);
@@ -429,7 +414,7 @@
         name: name.value.trim(), description: description.value.trim(),
         details: details.value.split('\n').map(line => line.trim()).filter(Boolean),
         price_cents: isBookable ? Math.round(Number(price.value) * 100) : null,
-        duration_minutes: Number(duration.value), capacity: isBirthday ? Number(capacity.value) : null, published: published.checked,
+        duration_minutes: Number(duration.value), capacity: isBirthday ? Number(capacity.value) : isProgram && capacity.value !== '' ? Number(capacity.value) : null, published: published.checked,
         sort_order: nextOrder, own_food_discount_cents: isBirthday ? Math.round(Number(discount.value) * 100) : 0,
         resources: spacePicker ? [...spacePicker.querySelectorAll('input:checked')].map(element => element.value) : [],
         program_data: campData.data
@@ -459,8 +444,8 @@
     panel.append(summary, form); group.insertBefore(panel, group.querySelector('.offering-admin-list'));
   }
   async function refreshCatalog() {
-    const [items, extras, registrations] = await Promise.all([
-      request('/api/bookings/staff/offerings'), request('/api/bookings/staff/extras'), request('/api/bookings/staff/camp-registrations')
+    const [items, extras] = await Promise.all([
+      request('/api/bookings/staff/offerings'), request('/api/bookings/staff/extras')
     ]);
     const fields = items.filter(item => item.category === 'field_rental');
     const camps = items.filter(item => ['camp', 'clinic', 'event'].includes(item.category));
@@ -471,9 +456,6 @@
     $('offering-admin-birthdays').replaceChildren(...parties.map(render));
     [$('offering-admin-field-rentals'), $('offering-admin-camps'), $('offering-admin-birthdays')].forEach(refreshServiceOrderLabels);
     $('offering-extra-list').replaceChildren(...extras.map(renderExtra));
-    $('camp-registration-admin-list').replaceChildren(...registrations.map(renderRegistration));
-    $('camp-registration-count').textContent = `${registrations.length} recent registration${registrations.length === 1 ? '' : 's'}`;
-    $('camp-registration-admin-status').textContent = registrations.length ? '' : 'No camp registrations yet.';
     loaded = true;
     status.textContent = `${fields.length} field rentals · ${camps.length} camps and clinics · ${parties.length} birthday parties.`;
   }
